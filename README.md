@@ -1,7 +1,7 @@
 icfp2013
 ========
 
-[![Build Status](http://ci.desh.su/job/ICFP-2013/badge/icon "Go to build status page")](http://ci.desh.su/job/ICFP-2013/)
+[![Build Status](http://ci.desh.su/buildStatus/icon?job=ICFP-2013 "Go to build status page")](http://ci.desh.su/job/ICFP-2013/)
 
 kolbaska's ICFP2013 code repository. It will become public after the end of contest.
 
