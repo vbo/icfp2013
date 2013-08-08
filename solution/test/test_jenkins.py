@@ -9,4 +9,4 @@ class TestSum(unittest.TestCase):
         pass
 
     def test_jenkins(self):
-        eq_(1, 0)
+        eq_(1, 1)
