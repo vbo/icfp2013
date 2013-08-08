@@ -23,7 +23,3 @@ Run tests (nosetests script was installed as one of dependencies):
 
     nosetests
 
-
-
-
-I am testing git/github with riboloff.
