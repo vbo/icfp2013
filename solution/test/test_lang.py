@@ -32,6 +32,18 @@ class FoldTestCase(unittest.TestCase):
             lambda x, y: x | y
         ), 129)
 
+    def test_hexadecimal_input(self):
+        self.assertEquals(lang.e_fold(
+            Int64(0xFFFFFFFFFFFFFFFF), Int64(0),
+            lambda x, y: x | y
+        ), 0x00000000000000FF)
+
+    def test_hexadecimal_and_xor(self):
+        self.assertEquals(lang.e_fold(
+            Int64(0xABCDEF0123456789), Int64(1),
+            lambda x, y: x ^ y
+        ), 1)
+
 
 class OpTestCase(unittest.TestCase):
 
