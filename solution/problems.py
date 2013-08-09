@@ -1,11 +1,4 @@
 original_problems = [
-    {'operators': ['if0', 'shr1'], 'group_id': 35, 'id': 'k2BIFBv2E8wJ3PljLMU5Xqta', 'size': 6},
-    {'operators': ['if0', 'shr4'], 'group_id': 36, 'id': 'J6EVWB9d4IA19doyMsS8PBYh', 'size': 6},
-    {'operators': ['and', 'if0'], 'group_id': 49, 'id': 'STD5fD7OThul8U7jTB1qPMKN', 'size': 7},
-    {'operators': ['if0', 'plus'], 'group_id': 51, 'id': '9f1RdDqzf4tsQ7qGCmjvZi50', 'size': 7},
-    {'operators': ['if0', 'not', 'shl1'], 'group_id': 58, 'id': 'ycbX7i79CMbFG5OL83ZcpjSE', 'size': 7},
-    {'operators': ['if0', 'shr1', 'shr4'], 'group_id': 59, 'id': '98CBBUCW4EofHxcHuZvEjoQj', 'size': 7},
-    {'operators': ['and', 'plus'], 'group_id': 67, 'id': 'qUurjigZjilVWk1jspZNZhoA', 'size': 8},
     {'operators': ['and', 'tfold'], 'group_id': 68, 'id': 'H48IXWDBBRqZT1R1fvvGcAIG', 'size': 8},
     {'operators': ['and', 'tfold'], 'group_id': 68, 'id': 'lAT6jJcBuNBwSxBpgP46MQS9', 'size': 8},
     {'operators': ['or', 'tfold'], 'group_id': 69, 'id': 'hc5pAaps0ACYouopKtH1UAhw', 'size': 8},
