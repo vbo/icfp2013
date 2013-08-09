@@ -40,6 +40,8 @@ class TemplatedProgramTreeNode(object):
 
     def __init__(self, operator, args=None, size=None):
         self.operator = operator
+        self.has_fold = operator == Operators.FOLD or args and any(a.has_fold for a in args)
+
 
         if args is None and operator != Operators.TERMINAL:
             raise ValueError('args may be null only with TERMINAL nodes')
@@ -66,9 +68,13 @@ def get_tree_templates(size):
     for i in range(1, (size + 1) // 2):
         yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
 
-    for i in range(1, size - 1):
-        for j in range(i + 1, size):
-            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(size - j)))
+    for i in range(1, size - 2):
+        for j in range(i + 1, size - 1):
+            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(size - j - 1)))
+
+    for i in range(1, size - 3):
+        for j in range(i + 1, size - 2):
+            yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(size - j - 2)))
 
 
 def make_tree_index(size, tree_indexes):
@@ -85,4 +91,12 @@ def make_tree_index(size, tree_indexes):
         indexes = map(tree_indexes.get, tree_template.treevars)
 
         for subtrees_combination in itertools.product(*indexes):
+
+            # NOTE Heuristic: Skip combination if it includes more than one FOLD
+            numfolds = sum(map(lambda tree: int(tree.has_fold_inside), subtrees_combination))
+            if numfolds > 1 or numfolds == 1 and tree_template.operator == Operators.FOLD:
+                continue
+
             yield TemplatedProgramTreeNode(tree_template.operator, args=subtrees_combination, size=size)
+
+
