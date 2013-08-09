@@ -40,6 +40,15 @@ class FoldTestCase(unittest.TestCase):
             lambda x, y: x ^ y
         ), 1)
 
+    def test_fold(self):
+        def lll(x, y):
+            print(x, y, type(x), type(y))
+            return Int64(y)
+        self.assertEquals(e.fold(
+            Int64(1), Int64(1),
+			lll
+        ), 1)
+
 
 class OpTestCase(unittest.TestCase):
 
