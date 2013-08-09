@@ -1,4 +1,9 @@
+from random import randint
+
+
 class Int64(long):
+
+    max = 18446744073709551615
 
     def __init__(self, x):
         if x > 0xFFFFFFFFFFFFFFFF:
@@ -12,3 +17,7 @@ class Int64(long):
             d = 2 ** 8
             yield Int64(me % d)
             me >>= 8
+
+    @classmethod
+    def random(cls):
+        return cls(randint(0, cls.max))

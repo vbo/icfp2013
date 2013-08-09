@@ -25,3 +25,10 @@ def shr4(x):
 def shr16(x):
     return x >> 16
 
+
+renames = {
+    "not": not_,
+    "and": and_,
+    "or": or_,
+}
+

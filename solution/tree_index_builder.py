@@ -40,20 +40,38 @@ class TemplatedProgramTreeNode(object):
 
     def __init__(self, operator, args=None, size=None):
         self.operator = operator
-        self.has_fold = operator == Operators.FOLD or args and any(a.has_fold for a in args)
+        self.has_fold = operator == Operators.FOLD \
+                        or ((args is not None) and any(a.has_fold for a in args))
 
-
-        if args is None and operator != Operators.TERMINAL:
+        if args is not None:
+            self.args = tuple(args)
+        elif operator != Operators.TERMINAL:
             raise ValueError('args may be null only with TERMINAL nodes')
+        else:
+            self.args = None
 
-        self.args = tuple(args)
+        if operator == Operators.FOLD:
+            self.traverse(self.set_fold_property_to_terminals)
+
         self.size = size
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
             return repr((self.operator,) + self.args)
         else:
-            return repr(self.args)
+            return repr(self.operator)
+
+    def set_fold_property_to_terminals(self, node):
+        if node.operator == Operators.TERMINAL:
+            node.has_fold = True
+
+    def traverse(self, func):
+        if self.args is None:
+            return
+
+        for arg in self.args:
+            func(arg)
+            arg.traverse(func)
 
 
 def get_tree_templates(size):
@@ -78,10 +96,35 @@ def get_tree_templates(size):
 
 
 def make_tree_index(size, tree_indexes):
+    '''
+    Use carefully:
+
+    >>> idxs = {}
+    >>> for n in range(1, 19): idxs[n] = list(tree_index_builder.make_tree_index(n, idxs))
+    >>> [len(idxs[n]) for n in sorted(idxs.keys())]
+    [1,
+    1,
+    2,
+    4,
+    11,
+    20,
+    51,
+    125,
+    342,
+    875,
+    2303,
+    5846,
+    15335,
+    40089,
+    107671,
+    287163,
+    774628,
+    2073501]
+    '''
 
     if size == 1:
         for t in get_tree_templates(size):
-            yield t
+            yield TemplatedProgramTreeNode(t.operator, size=size)
         return
 
     if size - 1 not in tree_indexes:
@@ -93,10 +136,8 @@ def make_tree_index(size, tree_indexes):
         for subtrees_combination in itertools.product(*indexes):
 
             # NOTE Heuristic: Skip combination if it includes more than one FOLD
-            numfolds = sum(map(lambda tree: int(tree.has_fold_inside), subtrees_combination))
+            numfolds = sum(map(lambda tree: int(tree.has_fold), subtrees_combination))
             if numfolds > 1 or numfolds == 1 and tree_template.operator == Operators.FOLD:
                 continue
 
             yield TemplatedProgramTreeNode(tree_template.operator, args=subtrees_combination, size=size)
-
-

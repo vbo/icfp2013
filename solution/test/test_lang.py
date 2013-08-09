@@ -43,6 +43,11 @@ class FoldTestCase(unittest.TestCase):
             lambda x, y: y
         ), 1)
 
+    def test_fold_func_application(self):
+        def lll(x, y):
+            return Int64(y)
+        self.assertEquals(e.fold(Int64(1), Int64(1), lll), 1)
+
 class Int64TestCase(unittest.TestCase):
     def test_overflow(self):
         with self.assertRaises(Exception):
