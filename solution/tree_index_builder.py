@@ -61,29 +61,41 @@ class TemplatedProgramTreeNode(object):
     def values(self):
         if self.operator == Operators.TERMINAL:
             for terminal in Operators.TERMINALS:
-                yield terminal
+                yield { 's': terminal, 'ops': [] }
             if self.could_contain_fold_ids:
-                yield Operators.ID2
-                yield Operators.ID3
+                yield { 's': Operators.ID2, 'ops': [] }
+                yield { 's': Operators.ID3, 'ops': [] }
         elif self.operator == Operators.OP1:
             for op in Operators.UNARY:
                 for value in self.args[0].values():
-                    yield "(%s %s)" % (op, value)
+                    yield {
+                            's': "(%s %s)" % (op, value['s']),
+                            'ops': value['ops'] + [op]
+                            }
         elif self.operator == Operators.BINARY:
             for op in Operators.BINARY:
                 for value in self.args[0].values():
                     for value2 in self.args[1].values():
-                        yield "(%s %s %s)" % (op, value, value2)
+                        yield {
+                                's': "(%s %s %s)" % (op, value['s'], value2['s']),
+                                'ops': value['ops'] + value2['ops'] + [op]
+                                }
         elif self.operator == Operators.IF0:
             for value in self.args[0].values():
                 for value2 in self.args[1].values():
                     for value3 in self.args[2].values():
-                        yield "(if0 %s %s %s)" % (value, value2, value3)
+                        yield {
+                                's': "(if0 %s %s %s)" % (value['s'], value2['s'], value3['s']),
+                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['if0']
+                                }
         elif self.operator == Operators.FOLD:
             for value in self.args[0].values():
                 for value2 in self.args[1].values():
                     for value3 in self.args[2].values():
-                        yield "(fold %s %s (lambda (%s %s) %s))" % (value, value2, Operators.ID2, Operators.ID3, value3)
+                        yield {
+                                's': "(fold %s %s (lambda (%s %s) %s))" % (value['s'], value2['s'], Operators.ID2, Operators.ID3, value3['s']),
+                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['fold']
+                                }
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
@@ -188,6 +200,10 @@ def get_formulas_from_index(size):
         idx = idxs[level]
         for template in idx:
             for formula in template.values():
-                formula = '(lambda (' + Operators.ID + ') ' + formula + ')'
-                print level, formula
+                formula['ops'] = set(formula['ops'])
+                if formula['s'][:5] == '(fold':
+                    formula['ops'] = set(['tfold']) - set(['fold'])
+                formula['s'] = '(lambda (' + Operators.ID + ') ' + formula['s'] + ')'
+                formula['size'] = level + 1
+                print formula
 
