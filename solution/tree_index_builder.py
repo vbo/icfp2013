@@ -43,6 +43,8 @@ class TemplatedProgramTreeNode(object):
         self.has_fold = operator == Operators.FOLD \
                         or ((args is not None) and any(a.has_fold for a in args))
 
+        self.could_contain_fold_ids = False
+
         if args is not None:
             self.args = tuple(args)
         elif operator != Operators.TERMINAL:
@@ -52,8 +54,36 @@ class TemplatedProgramTreeNode(object):
 
         if operator == Operators.FOLD:
             self.traverse(self.set_fold_property_to_terminals)
+            self.args[2].traverse(self.set_could_contain_fold_ids)
 
         self.size = size
+
+    def values(self):
+        if self.operator == Operators.TERMINAL:
+            for terminal in Operators.TERMINALS:
+                yield terminal
+            if self.could_contain_fold_ids:
+                yield Operators.ID2
+                yield Operators.ID3
+        elif self.operator == Operators.OP1:
+            for op in Operators.UNARY:
+                for value in self.args[0].values():
+                    yield "(%s %s)" % (op, value)
+        elif self.operator == Operators.BINARY:
+            for op in Operators.BINARY:
+                for value in self.args[0].values():
+                    for value2 in self.args[1].values():
+                        yield "(%s %s %s)" % (op, value, value2)
+        elif self.operator == Operators.IF0:
+            for value in self.args[0].values():
+                for value2 in self.args[1].values():
+                    for value3 in self.args[2].values():
+                        yield "(if0 %s %s %s)" % (value, value2, value3)
+        elif self.operator == Operators.FOLD:
+            for value in self.args[0].values():
+                for value2 in self.args[1].values():
+                    for value3 in self.args[2].values():
+                        yield "(fold %s %s (lambda (%s %s) %s))" % (value, value2, Operators.ID2, Operators.ID3, value3)
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
@@ -64,6 +94,10 @@ class TemplatedProgramTreeNode(object):
     def set_fold_property_to_terminals(self, node):
         if node.operator == Operators.TERMINAL:
             node.has_fold = True
+
+    def set_could_contain_fold_ids(self, node):
+        if node.operator == Operators.TERMINAL:
+            node.could_contain_fold_ids = True
 
     def traverse(self, func):
         if self.args is None:
@@ -141,3 +175,19 @@ def make_tree_index(size, tree_indexes):
                 continue
 
             yield TemplatedProgramTreeNode(tree_template.operator, args=subtrees_combination, size=size)
+
+def get_index_size(size):
+    idxs = {}
+    for n in range(1, size): idxs[n] = list(make_tree_index(n, idxs))
+    [len(idxs[n]) for n in sorted(idxs.keys())]
+    return idxs
+
+def get_formulas_from_index(size):
+    idxs = get_index_size(size)
+    for level in idxs:
+        idx = idxs[level]
+        for template in idx:
+            for formula in template.values():
+                formula = '(lambda (' + Operators.ID + ') ' + formula + ')'
+                print level, formula
+

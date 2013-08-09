@@ -27,5 +27,7 @@ class Operators(object):
     ZERO = '0'
     ONE = '1'
     ID = 'id'
+    ID2 = 'id2'
+    ID3 = 'id3'
 
     TERMINALS = set([ZERO, ONE, ID])
