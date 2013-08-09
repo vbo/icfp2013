@@ -66,9 +66,13 @@ def get_tree_templates(size):
     for i in range(1, (size + 1) // 2):
         yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
 
-    for i in range(1, size - 1):
-        for j in range(i + 1, size):
-            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(size - j)))
+    for i in range(1, size - 2):
+        for j in range(i + 1, size - 1):
+            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(size - j - 1)))
+
+    for i in range(1, size - 3):
+        for j in range(i + 1, size - 2):
+            yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(size - j - 2)))
 
 
 def make_tree_index(size, tree_indexes):
