@@ -96,5 +96,13 @@ class OpTestCase(unittest.TestCase):
         self.assertEquals(op.shr16(Int64(5)), 0)
         self.assertEquals(op.shr16(Int64(0xFFFFFFFFFFFFFFFF)), 0x0000FFFFFFFFFFFF)
 
+class ETestCase(unittest.TestCase):
 
-        self.assertEquals(op.shr1(Int64(1)), 0)
+    def test_if0(self):
+        self.assertEquals(e.if0(Int64(1), Int64(1), Int64(1)), 1)
+        self.assertEquals(e.if0(Int64(1), Int64(0), Int64(1)), 1)
+        self.assertEquals(e.if0(Int64(0), Int64(1), Int64(1)), 1)
+        self.assertEquals(e.if0(Int64(1), Int64(1), Int64(0)), 0)
+        self.assertEquals(e.if0(Int64(0xFFFFFFFFFFFFFFFF), Int64(0), Int64(0xFFFFFFFFFFFFFFFF)), 0xFFFFFFFFFFFFFFFF)
+        self.assertEquals(e.if0(Int64(0), Int64(0xFFFFFFFFFFFFFFFF), Int64(0xFFFFF)), 0xFFFFFFFFFFFFFFFF)
+        self.assertEquals(e.if0(Int64(0), op.shr4(Int64(0xFFFFFFFFFFFFFFFF)), Int64(0xFFFFF)), 0x0FFFFFFFFFFFFFFF)
