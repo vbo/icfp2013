@@ -66,10 +66,10 @@ class OpTestCase(unittest.TestCase):
         self.assertEquals(op.or_(Int64(0xFFFFFFFFFFFFFFFF), Int64(1)), 0xFFFFFFFFFFFFFFFF)
         self.assertEquals(op.or_(Int64(0xFFFFFFFFFFFFFFFE), Int64(0)), 0xFFFFFFFFFFFFFFFE)
 
-    def test_xor_(self):
-        self.assertEquals(op.xor_(Int64(0xFFFF23ABCE234), Int64(1)), 0x000FFFF23ABCE235)
-        self.assertEquals(op.xor_(Int64(0xFFFF23), Int64(1)), 0x0000000000FFFF22)
-        self.assertEquals(op.xor_(Int64(0), Int64(1)), 1)
+    def test_xor(self):
+        self.assertEquals(op.xor(Int64(0xFFFF23ABCE234), Int64(1)), 0x000FFFF23ABCE235)
+        self.assertEquals(op.xor(Int64(0xFFFF23), Int64(1)), 0x0000000000FFFF22)
+        self.assertEquals(op.xor(Int64(0), Int64(1)), 1)
 
     def test_plus(self):
         self.assertEquals(op.plus(Int64(0xFFFF23ABCE234), Int64(1)), 0x000FFFF23ABCE235)
