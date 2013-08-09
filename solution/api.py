@@ -32,8 +32,15 @@ def train(size=None, operators=None):
     return result
 
 
-def eval(id, program, arguments):
-    result = call("eval", {"id": id, "program": program, "arguments": map(str, arguments)})
+def eval(arguments, id=None, program=None):
+    params = {
+        "arguments": map(str, arguments)
+    }
+    if id:
+        params['id'] = id
+    else:
+        params['program'] = program
+    result = call("eval", params)
     return result
 
 def guess(id, program):
