@@ -13,5 +13,5 @@ def reduce2(function, iterable, initializer=None):
             raise TypeError('reduce() of empty sequence with no initial value')
     accum_value = initializer
     for x in it:
-        accum_value = function(accum_value, x)
+        accum_value = function(x, accum_value)
     return accum_value

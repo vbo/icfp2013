@@ -18,9 +18,6 @@ class FoldTestCase(unittest.TestCase):
             lambda x, y: x | y
         ), 3)
 
-    def test_overflow(self):
-        with self.assertRaises(Exception):
-            e.fold(Int64(2 ** 64))
 
     def test_almost_overflow(self):
         self.assertEquals(e.fold(
@@ -41,14 +38,20 @@ class FoldTestCase(unittest.TestCase):
         ), 1)
 
     def test_fold(self):
-        def lll(x, y):
-            print(x, y, type(x), type(y))
-            return Int64(y)
         self.assertEquals(e.fold(
-            Int64(1), Int64(1),
-			lll
+            Int64(2), Int64(1),
+            lambda x, y: y
         ), 1)
 
+class Int64TestCase(unittest.TestCase):
+    def test_overflow(self):
+        with self.assertRaises(Exception):
+            Int64(2 ** 64)
+
+    def test_itter(self):
+        expected = [128, 128, 0, 0, 0, 0, 0, 0]
+        for i, a in enumerate(Int64(0b1000000010000000)):
+            self.assertEquals(a, expected[i])
 
 class OpTestCase(unittest.TestCase):
 
