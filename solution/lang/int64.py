@@ -1,6 +1,8 @@
 class Int64(long):
 
     def __init__(self, x):
+        if x > 0xFFFFFFFFFFFFFFFF:
+            raise Exception('Input too large') 
         x %= 2 ** 64
         super(Int64, self).__init__(x)
 
