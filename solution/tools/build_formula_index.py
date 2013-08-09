@@ -207,4 +207,5 @@ def get_formulas_from_index(size):
                     formula['ops'] = set(['tfold']) - set(['fold'])
                 formula['s'] = '(lambda (' + Operators.ID + ') ' + formula['s'] + ')'
                 formula['size'] = level + 1
-                yield formula
+                if (formula['size'] == size):
+                    yield formula
