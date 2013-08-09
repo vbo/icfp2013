@@ -6,13 +6,10 @@ from .. import api
 
 api.request_delay = 5
 
-
-
-
 while True:
     train = api.train()
     inputs = list(generate_inputs())
-    evaled = api.eval(train["id"], None, inputs)
+    evaled = api.eval(inputs, train["id"], None)
     evaled["request"] = train
     evaled["request"]["input"] = inputs
 
