@@ -1,29 +1,32 @@
+from int64 import Int64 
+
+
 def not_(x):
-    return ~x & 0xFFFFFFFFFFFFFFFF
+    return Int64(~x & 0xFFFFFFFFFFFFFFFF)
 
 def and_(x, y):
-    return x & y
+    return Int64(x & y)
 
 def or_(x, y):
-    return x | y
+    return Int64(x | y)
 
 def xor(x, y):
-    return x ^ y
+    return Int64(x ^ y)
 
 def plus(x, y):
-    return (x + y) & 0xFFFFFFFFFFFFFFFF
+    return Int64((x + y) & 0xFFFFFFFFFFFFFFFF)
 
 def shl1(x):
-    return x << 1 & 0xFFFFFFFFFFFFFFFF
+    return Int64(x << 1 & 0xFFFFFFFFFFFFFFFF)
 
 def shr1(x):
-    return x >> 1
+    return Int64(x >> 1)
 
 def shr4(x):
-    return x >> 4
+    return Int64(x >> 4)
 
 def shr16(x):
-    return x >> 16
+    return Int64(x >> 16)
 
 
 renames = {
