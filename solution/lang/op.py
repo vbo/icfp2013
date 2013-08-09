@@ -7,7 +7,7 @@ def and_(x, y):
 def or_(x, y):
     return x | y
 
-def xor_(x, y):
+def xor(x, y):
     return x ^ y
 
 def plus(x, y):
