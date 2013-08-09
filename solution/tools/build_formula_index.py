@@ -53,7 +53,7 @@ class TemplatedProgramTreeNode(object):
 
         self.size = size
 
-    def values(self, contain_fold_ids=False):
+    def values(self, contain_fold_ids=False, allowed_ops=None):
         if self.operator == Operators.TERMINAL:
             for terminal in Operators.TERMINALS:
                 yield {'s': terminal, 'ops': []}
@@ -62,39 +62,43 @@ class TemplatedProgramTreeNode(object):
                 yield {'s': Operators.ID3, 'ops': []}
         elif self.operator == Operators.OP1:
             for op in Operators.UNARY:
-                for value in self.args[0].values(contain_fold_ids=contain_fold_ids):
-                    yield {
-                        's': "(%s %s)" % (op, value['s']),
-                        'ops': value['ops'] + [op]
-                    }
+                if not allowed_ops or op in allowed_ops:
+                    for value in self.args[0].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                        yield {
+                            's': "(%s %s)" % (op, value['s']),
+                            'ops': value['ops'] + [op]
+                        }
         elif self.operator == Operators.OP2:
             for op in Operators.BINARY:
-                for value in self.args[0].values(contain_fold_ids=contain_fold_ids):
-                    for value2 in self.args[1].values(contain_fold_ids=contain_fold_ids):
-                        yield {
-                            's': "(%s %s %s)" % (op, value['s'], value2['s']),
-                            'ops': value['ops'] + value2['ops'] + [op]
-                        }
+                if not allowed_ops or op in allowed_ops:
+                    for value in self.args[0].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                        for value2 in self.args[1].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                            yield {
+                                's': "(%s %s %s)" % (op, value['s'], value2['s']),
+                                'ops': value['ops'] + value2['ops'] + [op]
+                            }
         elif self.operator == Operators.IF0:
-            for value in self.args[0].values(contain_fold_ids=contain_fold_ids):
-                for value2 in self.args[1].values(contain_fold_ids=contain_fold_ids):
-                    for value3 in self.args[2].values(contain_fold_ids=contain_fold_ids):
-                        yield {
-                            's': "(if0 %s %s %s)" % (value['s'], value2['s'], value3['s']),
-                            'ops': value['ops'] + value2['ops'] + value3['ops'] + ['if0']
-                        }
+            if not allowed_ops or self.operator in allowed_ops:
+                for value in self.args[0].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                    for value2 in self.args[1].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                        for value3 in self.args[2].values(contain_fold_ids=contain_fold_ids, allowed_ops=allowed_ops):
+                            yield {
+                                's': "(if0 %s %s %s)" % (value['s'], value2['s'], value3['s']),
+                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['if0']
+                            }
         elif self.operator == Operators.FOLD:
-            if contain_fold_ids:
-                raise ValueError('Two folds in same tree is a BUG: %s' % self)
+            if not allowed_ops or self.operator in allowed_ops:
+                if contain_fold_ids:
+                    raise ValueError('Two folds in same tree is a BUG: %s' % self)
 
-            for value in self.args[0].values(contain_fold_ids=False):
-                for value2 in self.args[1].values(contain_fold_ids=False):
-                    for value3 in self.args[2].values(contain_fold_ids=True):
-                        yield {
-                            's': "(fold %s %s (lambda (%s %s) %s))" % (
-                                value['s'], value2['s'], Operators.ID2, Operators.ID3, value3['s']),
-                            'ops': value['ops'] + value2['ops'] + value3['ops'] + ['fold']
-                        }
+                for value in self.args[0].values(contain_fold_ids=False, allowed_ops=allowed_ops):
+                    for value2 in self.args[1].values(contain_fold_ids=False, allowed_ops=allowed_ops):
+                        for value3 in self.args[2].values(contain_fold_ids=True, allowed_ops=allowed_ops):
+                            yield {
+                                's': "(fold %s %s (lambda (%s %s) %s))" % (
+                                    value['s'], value2['s'], Operators.ID2, Operators.ID3, value3['s']),
+                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['fold']
+                            }
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
@@ -189,12 +193,12 @@ def get_index_size(size):
         idxs[n] = list(make_tree_index(n, idxs))
     return idxs
 
-def get_formulas_from_index(size):
+def get_formulas_from_index(size, allowed_ops=None):
     idxs = get_index_size(size)
     for level in idxs:
         idx = idxs[level]
         for template in idx:
-            for formula in template.values():
+            for formula in template.values(allowed_ops=allowed_ops):
                 formula['ops'] = set(formula['ops'])
                 if formula['s'][:5] == '(fold':
                     formula['ops'] = set(['tfold']) - set(['fold'])
