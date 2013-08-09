@@ -10,5 +10,5 @@ class Int64(long):
         me = self
         for a in range(8):
             d = 2 ** 8
-            yield me % d
+            yield Int64(me % d)
             me >>= 8
