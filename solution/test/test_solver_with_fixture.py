@@ -1,9 +1,9 @@
 import json
 import unittest
-from .. import sexpr
+from .. import solver
 
 
-class SexprTestWithFixture(unittest.TestCase):
+class SolverTestWithFixture(unittest.TestCase):
 
     def test_all(self):
         with open("./fixture/solver_fixture.jsons") as fixture:
@@ -13,7 +13,7 @@ class SexprTestWithFixture(unittest.TestCase):
                 conf = json.loads(line)
                 inputs = conf["request"]["input"]
                 results = conf["outputs"]
-                for i, result in enumerate(sexpr.solve(conf["request"]["challenge"], inputs)):
+                for i, result in enumerate(solver.solve(conf["request"]["challenge"], inputs)):
                     expected = int(results[i], base=16)
                     self.assertEquals(result, expected, "%s is not %s for %s" % (
                         result, expected, conf["request"]["challenge"]))
