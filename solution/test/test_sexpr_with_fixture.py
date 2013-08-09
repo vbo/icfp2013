@@ -3,7 +3,7 @@ import unittest
 from .. import sexpr
 
 
-class ApiTestWithFixture(unittest.TestCase):
+class SexprTestWithFixture(unittest.TestCase):
 
     def test_all(self):
         with open("./fixture/solver_fixture.jsons") as fixture:
