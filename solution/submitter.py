@@ -31,5 +31,5 @@ class Submitter:
         print "variants", variants
         print "expected", problem['challenge']
 
-problem = api.train(6)
+problem = api.train(7)
 submitter = Submitter(problem)
