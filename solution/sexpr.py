@@ -7,7 +7,11 @@ from lang import Int64, op, e
 
 id_table = {}
 
-def solve(st, arg):
+def solve(st, args):
+    for arg in args:
+        yield _solve(st, arg)
+
+def _solve(st, arg):
     top_level_items = _sexpr.parse(st)[0].items
     top_arg_id = top_level_items[1].items[0].value
     id_table[top_arg_id] = arg
