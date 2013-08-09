@@ -15,7 +15,7 @@ class SolutionTestRange(unittest.TestCase):
             for x in idsToTransform:
                 if x not in uniqIds:
                     uniqIds.append(x)
-        print text
+        #print text
         for i in range(len(uniqIds)):
             if (i == 0):
                 text = text.replace(uniqIds[i], 'id')
