@@ -15,7 +15,6 @@ def solve(st, arg):
     return parse_exp(body_e)
 
 def parse_exp(exp):
-    print "Parsing exp: ", exp
     if isinstance(exp, Atom):
         return parse_atom(exp)
     items = exp.items
@@ -29,12 +28,10 @@ def parse_exp(exp):
         func = getattr(e, term.value)
     elif term.value == 'lambda':
         def fold_func(x, y):
-            print args[0]
             args_exp_items = args[0].items
             id_table[args_exp_items[0].value] = x
             id_table[args_exp_items[1].value] = y
             res = parse_exp(args[1])
-            print "fold_func_ret:", res
             return res
         return fold_func
     else:
