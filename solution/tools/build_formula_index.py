@@ -133,13 +133,17 @@ def get_tree_templates(size):
     for i in range(1, (size + 1) // 2):
         yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
 
-    for i in range(1, size - 2):
-        for j in range(i + 1, size - 1):
-            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(size - j)))
+    if0_limit = size - 1
 
-    for i in range(1, size - 3):
-        for j in range(i + 1, size - 2):
-            yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(size - j - 1)))
+    for i in range(1, if0_limit - 1):
+        for j in range(i + 1, if0_limit):
+            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(if0_limit - j)))
+
+    fold_limit = size - 2
+
+    for i in range(1, fold_limit - 1):
+        for j in range(i + 1, fold_limit):
+            yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(fold_limit - j)))
 
 
 def make_tree_index(size, tree_indexes):
@@ -193,7 +197,6 @@ def get_index_size(size):
     idxs = {}
     for n in range(1, size):
         idxs[n] = list(make_tree_index(n, idxs))
-    [len(idxs[n]) for n in sorted(idxs.keys())]
     return idxs
 
 def get_formulas_from_index(size):
