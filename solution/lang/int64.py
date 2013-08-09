@@ -10,7 +10,3 @@ class Int64(long):
             d = 2 ** 8
             yield me % d
             me >>= 8
-
-
-def e_fold(e0, e1, lambda_):
-    return reduce(lambda_, e0, e1)
