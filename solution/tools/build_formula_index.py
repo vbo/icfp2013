@@ -201,7 +201,7 @@ def get_formulas_from_index(size, allowed_ops=None):
             for formula in template.values(allowed_ops=allowed_ops):
                 formula['ops'] = set(formula['ops'])
                 if formula['s'][:5] == '(fold':
-                    formula['ops'] = formula['ops'] + set(['tfold']) - set(['fold'])
+                    formula['ops'] = formula['ops'].difference(set(['fold'])).union(set(['tfold']))
                 formula['s'] = '(lambda (' + Operators.ID + ') ' + formula['s'] + ')'
                 formula['size'] = level + 1
                 if (formula['size'] == size):
