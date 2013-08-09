@@ -1,5 +1,4 @@
 import unittest
-from nose.exc import SkipTest
 
 from .. import api, config
 

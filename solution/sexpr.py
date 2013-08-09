@@ -1,5 +1,3 @@
-import re
-
 import _sexpr
 from _sexpr import Atom, SExpr as Exp, symbol as Symbol
 from lang import Int64, op, e
@@ -41,11 +39,15 @@ def parse_exp(exp):
     else:
         raise
     parsed_args = (parse_exp(arg) for arg in args)
-    return func(*list(parsed_args))
+    return Int64(func(*list(parsed_args)))
 
 def parse_atom(atom):
-    if atom.type == Symbol:
-        return Int64(id_table[atom.value])
-    elif atom.type == int:
-        return Int64(int(atom.value))
+        if atom.type == Symbol:
+            try:
+                return Int64(id_table[atom.value])
+            except ValueError:
+                return Int64(int(id_table[atom.value], base=16))
+        elif atom.type == int:
+            return Int64(int(atom.value))
+
 
