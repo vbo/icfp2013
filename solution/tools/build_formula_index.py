@@ -1,6 +1,6 @@
 import itertools
 
-from .operators import Operators
+from ..operators import Operators
 
 
 class TreeVar(int):
@@ -19,7 +19,6 @@ class TreeLevelTemplate(object):
 
         if treevars is None and self.operator != Operators.TERMINAL:
             raise ValueError('treevars may be null only with TERMINAL nodes')
-
         else:
             self.treevars = (treevars if isinstance(treevars, tuple) else
                              (treevars,) if isinstance(treevars, TreeVar) else
@@ -28,9 +27,11 @@ class TreeLevelTemplate(object):
         self.size = size
 
     def __repr__(self):
-        return ('Tree(%d): %s' % (self.size, (self.operator,) + self.treevars)
+        return (
+            'Tree(%d): %s' % (self.size, (self.operator,) + self.treevars)
             if self.operator != Operators.TERMINAL
-            else 'T(%d)' % self.size)
+            else 'T(%d)' % self.size
+        )
 
     def __hash__(self):
         return hash((TreeLevelTemplate, self.operator, self.treevars))
@@ -61,41 +62,42 @@ class TemplatedProgramTreeNode(object):
     def values(self):
         if self.operator == Operators.TERMINAL:
             for terminal in Operators.TERMINALS:
-                yield { 's': terminal, 'ops': [] }
+                yield {'s': terminal, 'ops': []}
             if self.could_contain_fold_ids:
-                yield { 's': Operators.ID2, 'ops': [] }
-                yield { 's': Operators.ID3, 'ops': [] }
+                yield {'s': Operators.ID2, 'ops': []}
+                yield {'s': Operators.ID3, 'ops': []}
         elif self.operator == Operators.OP1:
             for op in Operators.UNARY:
                 for value in self.args[0].values():
                     yield {
-                            's': "(%s %s)" % (op, value['s']),
-                            'ops': value['ops'] + [op]
-                            }
+                        's': "(%s %s)" % (op, value['s']),
+                        'ops': value['ops'] + [op]
+                    }
         elif self.operator == Operators.BINARY:
             for op in Operators.BINARY:
                 for value in self.args[0].values():
                     for value2 in self.args[1].values():
                         yield {
-                                's': "(%s %s %s)" % (op, value['s'], value2['s']),
-                                'ops': value['ops'] + value2['ops'] + [op]
-                                }
+                            's': "(%s %s %s)" % (op, value['s'], value2['s']),
+                            'ops': value['ops'] + value2['ops'] + [op]
+                        }
         elif self.operator == Operators.IF0:
             for value in self.args[0].values():
                 for value2 in self.args[1].values():
                     for value3 in self.args[2].values():
                         yield {
-                                's': "(if0 %s %s %s)" % (value['s'], value2['s'], value3['s']),
-                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['if0']
-                                }
+                            's': "(if0 %s %s %s)" % (value['s'], value2['s'], value3['s']),
+                            'ops': value['ops'] + value2['ops'] + value3['ops'] + ['if0']
+                        }
         elif self.operator == Operators.FOLD:
             for value in self.args[0].values():
                 for value2 in self.args[1].values():
                     for value3 in self.args[2].values():
                         yield {
-                                's': "(fold %s %s (lambda (%s %s) %s))" % (value['s'], value2['s'], Operators.ID2, Operators.ID3, value3['s']),
-                                'ops': value['ops'] + value2['ops'] + value3['ops'] + ['fold']
-                                }
+                            's': "(fold %s %s (lambda (%s %s) %s))" % (
+                                value['s'], value2['s'], Operators.ID2, Operators.ID3, value3['s']),
+                            'ops': value['ops'] + value2['ops'] + value3['ops'] + ['fold']
+                        }
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
@@ -128,7 +130,6 @@ def get_tree_templates(size):
 
     yield TreeLevelTemplate(size, Operators.OP1, TreeVar(size - 1))
 
-
     for i in range(1, (size + 1) // 2):
         yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
 
@@ -146,7 +147,7 @@ def make_tree_index(size, tree_indexes):
     Use carefully:
 
     >>> idxs = {}
-    >>> for n in range(1, 19): idxs[n] = list(tree_index_builder.make_tree_index(n, idxs))
+    >>> for n in range(1, 19): idxs[n] = list(make_tree_index(n, idxs))
     >>> [len(idxs[n]) for n in sorted(idxs.keys())]
     [1,
     1,
@@ -190,7 +191,8 @@ def make_tree_index(size, tree_indexes):
 
 def get_index_size(size):
     idxs = {}
-    for n in range(1, size): idxs[n] = list(make_tree_index(n, idxs))
+    for n in range(1, size):
+        idxs[n] = list(make_tree_index(n, idxs))
     [len(idxs[n]) for n in sorted(idxs.keys())]
     return idxs
 
@@ -205,5 +207,4 @@ def get_formulas_from_index(size):
                     formula['ops'] = set(['tfold']) - set(['fold'])
                 formula['s'] = '(lambda (' + Operators.ID + ') ' + formula['s'] + ')'
                 formula['size'] = level + 1
-                print formula
-
+                yield formula

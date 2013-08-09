@@ -1,17 +1,13 @@
 import json
 
-from ..lang import Int64
+from ..lang.int64 import generate_inputs
 from .. import api
 
 
 api.request_delay = 5
 
 
-def generate_inputs():
-    for a in range(256):
-        r = Int64.random()
-        rstr = str(hex(r)).rstrip("L")
-        yield rstr
+
 
 while True:
     train = api.train()

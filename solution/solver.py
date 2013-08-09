@@ -7,14 +7,17 @@ id_table = {}
 
 def solve(st, args):
     for arg in args:
-        yield _solve(st, arg)
+        solved = _solve(st, arg)
+        yield solved
 
 def _solve(st, arg):
     top_level_items = _sexpr.parse(st)[0].items
     top_arg_id = top_level_items[1].items[0].value
     id_table[top_arg_id] = arg
     body_e = top_level_items[2]
-    return parse_exp(body_e)
+    res = parse_exp(body_e)
+    id_table.clear()
+    return res
 
 def parse_exp(exp):
     if isinstance(exp, Atom):

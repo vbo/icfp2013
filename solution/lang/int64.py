@@ -7,7 +7,7 @@ class Int64(long):
 
     def __init__(self, x):
         if x > 0xFFFFFFFFFFFFFFFF:
-            raise Exception('Input too large') 
+            raise Exception('Input too large: %s' % x)
         x %= 2 ** 64
         super(Int64, self).__init__(x)
 
@@ -21,3 +21,10 @@ class Int64(long):
     @classmethod
     def random(cls):
         return cls(randint(0, cls.max))
+
+
+def generate_inputs():
+    for a in range(256):
+        r = Int64.random()
+        rstr = str(hex(r)).rstrip("L")
+        yield rstr
