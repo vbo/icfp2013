@@ -22,16 +22,6 @@ class FormulaBuilderTestCase(unittest.TestCase):
                equels = 1 
         self.assertEquals(equels,1)
 
-#    def test_test1(self):
-#        p = re.compile('\(lambda')
-#        a = build_formula_index.get_formulas_from_index(5)
-#        equels = 0
-#        for b in a:
-#            print b['s']
-#            if p.match(b['s']):
-#               equels = 1 
-#        self.assertEquals(equels,1)
-        
     def test_7_level_if0_and(self):
         p = re.compile('\(lambda \(id\) \(if0 .*and')
         a = build_formula_index.get_formulas_from_index(7)
@@ -62,6 +52,15 @@ class FormulaBuilderTestCase(unittest.TestCase):
     def test_7_level_Tfold(self):
         p = re.compile('\(lambda \(id\) \(fold')
         a = build_formula_index.get_formulas_from_index(7)
+        equels = 0
+        for b in a:
+            if p.search(b['s']):
+                equels = 1 
+        self.assertEquals(equels, 1)
+
+    def test_8_level_Tfold_params_const(self):
+        p = re.compile('\(lambda \(id\) \(fold [1|0]')
+        a = build_formula_index.get_formulas_from_index(8)
         equels = 0
         for b in a:
             if p.search(b['s']):

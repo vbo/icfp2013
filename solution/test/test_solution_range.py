@@ -15,7 +15,6 @@ class SolutionTestRange(unittest.TestCase):
             for x in idsToTransform:
                 if x not in uniqIds:
                     uniqIds.append(x)
-        #print text
         for i in range(len(uniqIds)):
             if (i == 0):
                 text = text.replace(uniqIds[i], 'id')
@@ -23,9 +22,7 @@ class SolutionTestRange(unittest.TestCase):
                 text = text.replace(uniqIds[i], 'id' + str(i+1))
         return text
 
-
-    def test_range3(self):
-        size = 5
+    def _test_range(self,size):
         programs = []
         for data in build_formula_index.get_formulas_from_index(size):
             programs.append(data["s"])
@@ -34,6 +31,26 @@ class SolutionTestRange(unittest.TestCase):
         program = self._transformXsToIds(program)
         self.assertTrue(program in programs, '%s not found' % (program))
 
+    def test_range3(self):
+        self._test_range(3)
+
+    def test_range4(self):
+        self._test_range(4)
+
+    def test_range5(self):
+        self._test_range(5)
+
+    def test_range6(self):
+        self._test_range(6)
+
+    def test_range7(self):
+        self._test_range(7)
+
+    def test_range8(self):
+        self._test_range(8)
+
+    def test_range9(self):
+        self._test_range(9)
 
 # skip to not DDoS game server
-#SolutionTestRange.__test__ = False
+SolutionTestRange.__test__ = False
