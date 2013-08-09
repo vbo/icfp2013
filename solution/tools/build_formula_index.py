@@ -73,7 +73,7 @@ class TemplatedProgramTreeNode(object):
                         's': "(%s %s)" % (op, value['s']),
                         'ops': value['ops'] + [op]
                     }
-        elif self.operator == Operators.BINARY:
+        elif self.operator == Operators.OP2:
             for op in Operators.BINARY:
                 for value in self.args[0].values():
                     for value2 in self.args[1].values():

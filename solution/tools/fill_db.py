@@ -1,17 +1,10 @@
-import psycopg2
+from .. import db
 import build_formula_index
 from ..lang.int64 import generate_inputs, Int64
 from .. import solver
 
-
-#a = '''"{"(lambda (id) (shr4 (shr1 (shr1 (shr16 0)))))","(lambda (id) (shr4 (shr16 (shr16 (shr1 1)))))","(lambda (id) (shr1 (shr16 (shr4 (shr1 1)))))","(lambda (id) (shr1 (shr1 (shr16 (shr4 1)))))","(lambda (id) (shr1 (shr1 (shr16 (shr4 0)))))","(lambda (id) (shr4 (shr16 (shr16 (shr1 0)))))","(lambda (id) (shr4 (shr16 (shr1 (shr4 1)))))","(lambda (id) (shr4 (shr16 (shr1 (shr4 0)))))","(lambda (id) (shr1 (shr16 (shr4 (shr16 1)))))","(lambda (id) (shr1 (shr4 (shr16 (shr1 0)))))","(lambda (id) (shr4 (shr16 (shr1 (shr16 1)))))","(lambda (id) (shr4 (shr16 (shr1 (shr16 0)))))","(lambda (id) (shr1 (shr4 (shr16 (shr1 1)))))","(lambda (id) (shr16 (shr16 (shr4 (shr1 0)))))","(lambda (id) (shr4 (shr1 (shr16 (shr4 1)))))","(lambda (id) (shr1 (shr4 (shr16 (shr16 0)))))","(lambda (id) (shr1 (shr4 (shr16 (shr16 1)))))","(lambda (id) (shr4 (shr16 (shr1 (shr1 1)))))","(lambda (id) (shr4 (shr1 (shr16 (shr4 0)))))","(lambda (id) (shr4 (shr4 (shr16 (shr1 1)))))","(lambda (id) (shr1 (shr4 (shr16 (shr4 0)))))","(lambda (id) (shr1 (shr16 (shr16 (shr4 1)))))","(lambda (id) (shr1 (shr4 (shr16 (shr4 1)))))","(lambda (id) (shr4 (shr1 (shr16 (shr16 1)))))","(lambda (id) (shr4 (shr16 (shr1 (shr1 0)))))","(lambda (id) (shr16 (shr4 (shr1 (shr16 1)))))","(lambda (id) (shr16 (shr4 (shr1 (shr4 0)))))","(lambda (id) (shr16 (shr4 (shr1 (shr4 1)))))","(lambda (id) (shr4 (shr4 (shr1 (shr16 0)))))","(lambda (id) (shr16 (shr4 (shr1 (shr16 0)))))","(lambda (id) (shr16 (shr4 (shr1 (shr1 1)))))","(lambda (id) (shr16 (shr4 (shr16 (shr1 0)))))","(lambda (id) (shr16 (shr4 (shr1 (shr1 0)))))","(lambda (id) (shr4 (shr4 (shr1 (shr16 1)))))","(lambda (id) (shr16 (shr4 (shr16 (shr1 1)))))","(lambda (id) (shr4 (shr1 (shr16 (shr16 0)))))","(lambda (id) (shr4 (shr1 (shr16 (shr1 1)))))","(lambda (id) (shr4 (shr1 (shr16 (shr1 0)))))","(lambda (id) (shr16 (shr4 (shr4 (shr1 0)))))","(lambda (id) (shr16 (shr4 (shr4 (shr1 1)))))","(lambda (id) (shr1 (shr16 (shr16 (shr4 0)))))","(lambda (id) (shr16 (shr16 (shr4 (shr1 1)))))","(lambda (id) (shr1 (shr16 (shr4 (shr4 1)))))","(lambda (id) (shr16 (shr1 (shr16 (shr4 1)))))","(lambda (id) (shr16 (shr16 (shr1 (shr4 0)))))","(lambda (id) (shr16 (shr1 (shr16 (shr4 0)))))","(lambda (id) (shr1 (shr16 (shr1 (shr4 0)))))","(lambda (id) (shr4 (shr1 (shr4 (shr16 1)))))","(lambda (id) (shr16 (shr1 (shr4 (shr4 0)))))","(lambda (id) (shr16 (shr1 (shr4 (shr1 1)))))","(lambda (id) (shr1 (shr16 (shr1 (shr4 1)))))","(lambda (id) (shr16 (shr1 (shr4 (shr4 1)))))","(lambda (id) (shr1 (shr1 (shr4 (shr16 1)))))","(lambda (id) (shr16 (shr1 (shr4 (shr16 0)))))","(lambda (id) (shr16 (shr1 (shr4 (shr16 1)))))","(lambda (id) (shr16 (shr1 (shr1 (shr4 1)))))","(lambda (id) (shr1 (shr4 (shr1 (shr16 0)))))","(lambda (id) (shr1 (shr4 (shr1 (shr16 1)))))","(lambda (id) (shr4 (shr1 (shr4 (shr16 0)))))","(lambda (id) (shr1 (shr4 (shr4 (shr16 0)))))","(lambda (id) (shr1 (shr1 (shr4 (shr16 0)))))","(lambda (id) (shr4 (shr16 (shr4 (shr1 1)))))","(lambda (id) (shr16 (shr1 (shr1 (shr4 0)))))","(lambda (id) (shr1 (shr16 (shr4 (shr4 0)))))","(lambda (id) (shr16 (shr16 (shr1 (shr4 1)))))","(lambda (id) (shr4 (shr4 (shr16 (shr1 0)))))","(lambda (id) (shr4 (shr16 (shr4 (shr1 0)))))","(lambda (id) (shr1 (shr4 (shr4 (shr16 1)))))","(lambda (id) (shr16 (shr1 (shr4 (shr1 0)))))","(lambda (id) (shr4 (shr1 (shr1 (shr16 1)))))","(lambda (id) (shr1 (shr16 (shr4 (shr1 0)))))","(lambda (id) (shr1 (shr16 (shr4 (shr16 0)))))"}"'''
-#for x in a.split(','):
-#    print x
-#exit()
 inputs = list(generate_inputs())
 
-db = psycopg2.connect("dbname=icfp2013_01 user=vbo")
-cur = db.cursor()
 cnt = 0
 for data in build_formula_index.get_formulas_from_index(5):
     cnt += 1
@@ -22,7 +15,7 @@ for data in build_formula_index.get_formulas_from_index(5):
     operators.sort()
     operators = "_".join(operators)
     assert len(outputs)
-    cur.execute(
+    db.query(
         "INSERT INTO program"
         "(size, operators, code, inputs, outputs)"
         "VALUES (%s, %s, %s, %s, %s)",
@@ -30,7 +23,6 @@ for data in build_formula_index.get_formulas_from_index(5):
     )
     #for row in cur.fetchall():
     #    print row
-db.commit()
 print cnt
 
 
