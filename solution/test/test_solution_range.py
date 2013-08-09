@@ -34,23 +34,19 @@ class SolutionTestRange(unittest.TestCase):
     def test_range3(self):
         self._test_range(3)
 
-    def test_range4(self):
-        self._test_range(4)
-
-    def test_range5(self):
-        self._test_range(5)
-
-    def test_range6(self):
-        self._test_range(6)
-
-    def test_range7(self):
-        self._test_range(7)
-
-    def test_range8(self):
-        self._test_range(8)
-
-    def test_range9(self):
-        self._test_range(9)
+    def test_params_in_tree_generator(self):
+        programs = []
+        for data in build_formula_index.get_formulas_from_index(4, ['plus', 'or']):
+            programs.append(data["s"])
+            fixtures = []
+            fixtures.append('(lambda (id) (plus id id))')
+            fixtures.append('(lambda (id) (or 1 id))')
+            fixtures.append('(lambda (id) (plus 1 1))')
+            fixtures.append('(lambda (id) (plus id id))')
+            fixtures.append('(lambda (id) (or id id))')
+            for fixture in fixtures:
+                self.assertTrue(fixture in programs, '%s not found' % (fixture))
+        print "\n"
 
 # skip to not DDoS game server
-SolutionTestRange.__test__ = False
+#SolutionTestRange.__test__ = False
