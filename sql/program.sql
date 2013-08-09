@@ -8,6 +8,8 @@ CREATE TABLE program
       size smallint NOT NULL,
       operators character varying(64) NOT NULL,
       code character varying,
+      inputs character varying(8192),
+      outputs character varying(8192),
       CONSTRAINT program_pkey PRIMARY KEY (id)
 )
 WITH (

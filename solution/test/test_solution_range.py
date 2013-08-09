@@ -53,4 +53,4 @@ class SolutionTestRange(unittest.TestCase):
         self._test_range(9)
 
 # skip to not DDoS game server
-#SolutionTestRange.__test__ = False
+SolutionTestRange.__test__ = False
