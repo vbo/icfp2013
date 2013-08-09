@@ -1,16 +1,26 @@
 import unittest
+from nose.exc import SkipTest
 
 from .. import api, config
 
 
 ex_train = config.example_train
 
-api.request_delay = 5
+api.request_delay = 0
 
 class ApiTestCase(unittest.TestCase):
 
+    def test_connection(self):
+        base_url = "http://robopoker.org/icfp/train"
+        api.call_url = lambda x: base_url + "?sleep=40"
+        api.auto_retry = False
+        api.timeout = 1
+        with self.assertRaises(api.Timeout):
+            result = api.train()
+
     def test_train(self):
         result = api.train(20, "tfold")
+        print result
         self.assertEquals(result["size"], 20)
 
     def test_eval(self):
