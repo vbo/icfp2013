@@ -2,7 +2,7 @@ import db
 import api
 from problems import original_problems
 
-api.request_delay = 5
+api.request_delay = 3
 
 def submit(problem):
     operators = list(problem["operators"])
@@ -36,12 +36,17 @@ def submit(problem):
     #print "expected", problem['challenge']
 
 if __name__ == '__main__':
-    problem = api.train(6)
-    submit(problem)
-    exit()
-    if 0:
-        group_id = int(raw_input())
-        for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
+    #problem = api.train(6)
+    #submit(problem)
+    #exit()
+    #if 0:
+    group_id = int(raw_input())
+    for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
+        try:
             submit(problem)
-            raw_input()
+        except api.AlreadySolvedException as e:
+            print 'solved'
+            pass
+        print 'want another one?'
+        raw_input()
 
