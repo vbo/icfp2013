@@ -12,9 +12,13 @@ from .. import problems
 from ..util import get_int64_array_hash
 
 
-def generate_sql_for_problem(problem, index):
+def generate_sql_for_problem(problem, index, parallelize=False, use_parser=True):
     for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
-        outputs = list(solver.solve_formula(formula, inputs, parallelize=args.parallelize))
+        if use_parser:
+            outputs = list(solver.solve(formula["s"], inputs, parallelize=parallelize))
+        else:
+            outputs = list(solver.solve_formula(formula, inputs, parallelize=parallelize))
+
 
         db_outputs = get_int64_array_hash(outputs)
 
@@ -44,11 +48,15 @@ if __name__ == '__main__':
     parser.add_argument("--limit", type=int, dest='limit', default=1)
     parser.add_argument("--group_id", type=int, dest='group_id', default=None)
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
-    parser.add_argument("-f", "--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
+    parser.add_argument("-f", "--force", action='store_true', dest='force',
+            help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
     parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
     parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
-    parser.add_argument("--nocompress", action="store_true", dest="nocompress", default=False)
+    parser.add_argument("--nocompress", action="store_true", dest="nocompress", default=False,
+            help='Do not call gzip after outputting sql')
+    parser.add_argument("--noparse", action="store_true", dest="noparse", default=False,
+            help="Don't use parser - use solve_formula to evaluate programs")
 
     args = parser.parse_args()
 
@@ -103,7 +111,7 @@ if __name__ == '__main__':
             assert_sql_path = problem_sql_path
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
-        if not args.force and os.path.isfile(problem_sql_path) or os.path.isfile(problem_sql_path + '.gz'):
+        if not args.force and (os.path.isfile(problem_sql_path) or os.path.isfile(problem_sql_path + '.gz')):
             print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
@@ -114,7 +122,7 @@ if __name__ == '__main__':
         try:
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
-                for program_query in generate_sql_for_problem(problem_conf, index):
+                for program_query in generate_sql_for_problem(problem_conf, index, args.parallelize, use_parser=not args.noparse):
                     fp.write(program_query)
         except Exception as e:
             if os.path.isfile(problem_sql_path):
