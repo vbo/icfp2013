@@ -22,6 +22,8 @@ class Operators(object):
 
     BINARY = set([AND, OR, XOR, PLUS])
 
+    ALL_OPS = BINARY | UNARY | set([IF0, FOLD])
+
     TERMINAL = 'T'
 
     ZERO = '0'
@@ -31,3 +33,6 @@ class Operators(object):
     ID3 = 'id3'
 
     TERMINALS = set([ZERO, ONE, ID])
+    TERMINALS_FULL = set([ZERO, ONE, ID, ID2, ID3])
+
+    TFOLD = 'tfold'

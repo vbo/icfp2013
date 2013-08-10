@@ -4,6 +4,7 @@ from . import build_formula_index
 from ..lang.int64 import generate_inputs
 from .. import solver
 from .. import problems
+from ..submitter import get_int64_array_hash
 
 parser = argparse.ArgumentParser()
 
@@ -24,16 +25,32 @@ offset = args.offset
 limit = args.limit
 problems_without_dupes = list(problems.get_problems_without_dupes())
 
+inputs_hash = get_int64_array_hash(inputs)
+inputs_readable = '|'.join('%016x' % x for x in inputs)
+
+query = (
+    "INSERT INTO inputs"
+    "(inputs_hash, inputs)"
+    "VALUES ('%s', '%s');" %
+    (inputs_hash, inputs_readable)
+)
+
+if not args.dry_run:
+    db.query(query)
+else:
+    print query
+
 cnt = 0
 for problem_conf in problems_without_dupes[offset:offset + limit]:
-    for data in index.generate_formulas(problem_conf["size"], allowed_ops=problem_conf["operators"]):
+
+    for formula in index.generate_formulas(problem_conf["size"], allowed_ops=problem_conf["operators"]):
         cnt += 1
 
-        outputs = list(solver.solve(data["s"], inputs, parallelize=args.parallelize))
+        outputs = list(solver.solve_formula(formula, inputs, parallelize=args.parallelize))
 
-        db_inputs = "|".join(map(lambda x: ("%016x" % int(str(x), base=16)), inputs))
-        db_outputs = "|".join(map(lambda x: "%016x" % int(hex(x).rstrip("L"), base=16), outputs))
-        operators = list(data["ops"])
+        db_outputs = get_int64_array_hash(outputs)
+
+        operators = list(formula["ops"])
         operators.sort()
         operators = "_".join(operators)
         assert len(db_outputs)
@@ -42,7 +59,7 @@ for problem_conf in problems_without_dupes[offset:offset + limit]:
             "INSERT INTO program"
             "(size, operators, code, inputs, outputs)"
             "VALUES (%s, '%s', '%s', '%s', '%s');" %
-            (data["size"], operators, data["s"], db_inputs, db_outputs)
+            (formula["size"], operators, formula["s"], inputs_hash, db_outputs)
         )
 
         if not args.dry_run:
