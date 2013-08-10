@@ -63,13 +63,13 @@ def parse_exp(exp):
     return Int64(func(*parsed_args))
 
 def parse_atom(atom):
-        if atom.type == Symbol:
-            try:
-                return Int64(id_table[atom.value])
-            except ValueError:
-                return Int64(int(id_table[atom.value], base=16))
-        elif atom.type == int:
-            return Int64(int(atom.value))
+    if atom.type == Symbol:
+        try:
+            return Int64(id_table[atom.value])
+        except ValueError:
+            return Int64(int(id_table[atom.value], base=16))
+    elif atom.type == int:
+        return Int64(int(atom.value))
 
 
 def solve_formula(formula, args, parallelize=False):
@@ -132,8 +132,7 @@ def _solve_formula(formula):
         def fold_helper(id2, id3):
             id_table[Operators.ID2] = id2
             id_table[Operators.ID3] = id3
-
-            return _solve_formula(args[2])
+            return _solve_formula(args[3])
 
         return e.fold(
             _solve_formula(args[0]),

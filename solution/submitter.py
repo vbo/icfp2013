@@ -10,10 +10,14 @@ from .problems import original_problems
 api.request_delay = 3
 
 class NotSolvedError(BaseException):
-    def __init__(self, outputs, variants):
+    def __init__(self, message, outputs, variants):
         super(BaseException, self).__init__()
+        self.message = message
         self.outputs = outputs
         self.variants = variants
+
+    def __str__(self):
+        return self.message
 
 class IndexNotFoundError(Exception):
     pass
@@ -24,6 +28,9 @@ def is_program_conform_to_data(program_text, inputs, outputs):
         if ideal_out != our_out:
             return False
     return True
+
+def get_variants_count(variants):
+    return len(variants)
 
 def load_inputs_from_index(size, operators):
     operators = "_".join(operators)
@@ -37,23 +44,22 @@ def load_inputs_from_index(size, operators):
         (inputs_hash,))
     if not serialized:
         raise IndexNotFoundError('There is no data in DB about this problem')
-    return serialized.split('|'), inputs_hash
+    return map(lambda x: '0x' + str(x), serialized.split('|')), inputs_hash
 
 def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     operators = "_".join(operators)
     sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
     variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
-    print variants
-    return variants
+    return variants, len(variants)
 
 def submit(problem):
     operators = list(problem["operators"])
     operators.sort()
     inputs, inputs_hash = load_inputs_from_index(problem["size"], operators)
 
-    result = api.eval(map(lambda x: '0x' + x, inputs), problem['id'])
+    result = api.eval(inputs, problem['id'])
     if result['status'] != 'ok':
-        raise Exception('Eval error')
+        raise Exception('Eval error: ' + result["message"])
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
@@ -62,13 +68,15 @@ def submit(problem):
     new_inputs = []
     new_outputs = []
 
-    for i, variant in enumerate(variants):
+    guesses_used = 0
+    for variant in variants:
         if not is_program_conform_to_data(variant, new_inputs, new_outputs):
             print "skipping variant because it doesn't work on new data"
             continue
+        guesses_used += 1
         res = api.guess(problem['id'], variant)
         if res['status'] == 'win':
-            print "solved from %d variants. %d guesses used. " % (len(variants), i + 1)
+            print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
             print "answer is: ", variant
             return
         elif res['status'] == 'error':
@@ -78,7 +86,7 @@ def submit(problem):
             new_input, new_output, _my_bad_output = map(lambda x: int(x, base=16), res['values'])
             new_inputs.append(new_input)
             new_outputs.append(new_output)
-    raise NotSolvedError(readable_outputs, variants)
+    raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), readable_outputs, variants)
 
 
 if __name__ == '__main__':
