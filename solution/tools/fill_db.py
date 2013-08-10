@@ -86,7 +86,7 @@ if __name__ == '__main__':
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
         if not args.force and os.path.isfile(problem_sql_path):
-            print 'Skipping generating SQL for problem group %d.' % group_id
+            print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
         print 'Generating SQL for problem group %d, saving to "%s"' % (group_id, problem_sql_path)
