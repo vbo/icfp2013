@@ -333,7 +333,6 @@ class TreeTemplatesIndex(object):
 
     def generate_formulas(self, size, allowed_ops=None):
 
-        import pdb; pdb.set_trace()
         templates_level = size - 1
 
         if allowed_ops is not None:
