@@ -12,7 +12,7 @@ from ..util import get_int64_array_hash
 
 
 def generate_sql_for_problem(problem, index):
-    for formula in index.generate_formulas(problem_conf["size"], allowed_ops=problem_conf["operators"]):
+    for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
         outputs = list(solver.solve_formula(formula, inputs, parallelize=args.parallelize))
 
         db_outputs = get_int64_array_hash(outputs)
