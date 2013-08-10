@@ -1,9 +1,17 @@
 import itertools
 
 
-def get_problems_without_dupes():
-    for group_id, problems in itertools.groupby(original_problems, lambda p: p['group_id']):
+def get_problems_without_dupes(getter=None):
+    if not getter:
+        getter = lambda: original_problems
+    for group_id, problems in itertools.groupby(getter(), lambda p: p['group_id']):
         yield problems.next()
+
+
+fixture_problems = [
+    {'operators': ['plus', 'not'], 'group_id': -1, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 10},
+    {'operators': None, 'group_id': -10, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 9},
+]
 
 
 original_problems = [
