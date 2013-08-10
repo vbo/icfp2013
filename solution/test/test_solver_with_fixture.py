@@ -5,6 +5,8 @@ from ..tools import build_formula_index
 
 class SolverTestWithFixture(unittest.TestCase):
 
+    tree_index_root = './tree_index'
+
     def test_all(self):
         with open("./fixture/solver_fixture.jsons") as fixture:
             for line in fixture:
@@ -20,6 +22,8 @@ class SolverTestWithFixture(unittest.TestCase):
 
     def test_FunctionExistance(self):
         with open("./fixture/solver_fixture.jsons") as fixture:
+            index = build_formula_index.TreeTemplatesIndex(self.tree_index_root)
+
             for line in fixture:
                 if not line.strip():
                     continue
@@ -29,10 +33,10 @@ class SolverTestWithFixture(unittest.TestCase):
                 if size > 10:
                     continue
                 print '.'
-                programs = []
-                for data in build_formula_index.get_formulas_from_index(size):
-                    programs.append(data)
-                self.assertTrue(program in programs, '%s not found. Size: %s' % (program, size))
+
+                self.assertTrue(any(program == possible_program for possible_program in
+                                    index.generate_formulas(size)),
+                                '%s not found. Size: %s' % (program, size))
 
 
 
