@@ -1,5 +1,6 @@
 import unittest
 from ..tools import build_formula_index
+from nose.plugins.attrib import attr
 import re
 
 class FormulaBuilderTestCase(unittest.TestCase):
@@ -46,6 +47,7 @@ class FormulaBuilderTestCase(unittest.TestCase):
 
         self.assertEqual(equals, 1, "Test number: " + str(number) + "\n\t\tFormula not found: '%s'" % formula_regexp_text)
 
+    @attr('fast')
     def test_formulas(self):
         for f_regexp, size, operators, number in self.formulas:
             self._check_formula_is_present(f_regexp, size, operators, number)

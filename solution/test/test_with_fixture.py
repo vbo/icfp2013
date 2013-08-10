@@ -1,6 +1,7 @@
 import json, unittest, re, sys
 from .. import solver, api, config
 from ..tools import build_formula_index
+from nose.plugins.attrib import attr
 
 ex_train = config.example_train
 
@@ -41,5 +42,3 @@ class SolverTestWithFixture(unittest.TestCase):
             else:
                 text = text.replace(uniqIds[i], 'id' + str(i+1))
         return text
-
-SolverTestWithFixture.__test__ = False

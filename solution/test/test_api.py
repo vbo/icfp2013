@@ -1,6 +1,6 @@
 import unittest
 from nose.exc import SkipTest
-
+from nose.plugins.attrib import attr
 from .. import api, config
 
 
@@ -41,7 +41,3 @@ class ApiTestCase(unittest.TestCase):
         self.assertEquals(len(result["values"]), 3)
         result = api.guess(problem["id"], problem["challenge"])
         self.assertEquals(result["status"], "win")
-
-
-# skip to not DDoS game server
-ApiTestCase.__test__ = False

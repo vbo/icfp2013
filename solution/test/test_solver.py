@@ -1,25 +1,29 @@
 import unittest
 from nose.exc import SkipTest
 import tempfile
-
 from .. import solver
 from ..lang import Int64, op
 from ..tools import build_formula_index
+from nose.plugins.attrib import attr
 
 class SolverTestCase(unittest.TestCase):
 
+    @attr('fast')
     def test_top_level_const(self):
         self.assertEquals(solver._solve("(lambda (t) 0)", 0), 0)
         self.assertEquals(solver._solve("(lambda (t) 1)", 0), 1)
 
+    @attr('fast')
     def test_top_level_arg(self):
         self.assertEquals(solver._solve("(lambda (t) t)", 31337), 31337)
 
+    @attr('fast')
     def test_top_level_op1(self):
         self.assertEquals(solver._solve("(lambda (t) (not 0))", 0), op.not_(0))
         self.assertEquals(solver._solve("(lambda (t) (not t))", 8), op.not_(8))
         self.assertEquals(solver._solve("(lambda (t) (shl1 t))", 8), op.shl1(8))
 
+    @attr('fast')
     def test_top_level_fold(self):
         self.assertEquals(solver._solve("(lambda (x) (fold x 1 (lambda (y z) z)))", 1), 1)
         self.assertEquals(solver._solve("(lambda (x_19527) (fold x_19527 0 (lambda (x_19527 x_19528) "
@@ -54,6 +58,7 @@ class SolverTestCase(unittest.TestCase):
         for i, a in enumerate(inputs):
             self.assertEquals(solver._solve("(lambda (id) (fold id 0 (lambda (id2 id3) (if0 id3 id2 0))))", Int64(a)), outputs[i])
 
+    @attr('fast')
     def test_local_params(self):
         self.assertEquals(solver._solve("(lambda (x_3739) (fold x_3739 0 (lambda (x_3739 x_3740) (if0 x_3740 x_3739 0))))", Int64(0xFFFADCDEFFFF)), 0)
 
@@ -64,7 +69,10 @@ class SolverTestCase(unittest.TestCase):
         counter = 0
         for formula in index.generate_formulas(size, allowed_ops):
             counter = counter + 1
-            outputs = list(solver.solve_formula(formula, map(lambda x: Int64(x), inputs1)))
+            try:
+                outputs = list(solver.solve_formula(formula, map(lambda x: Int64(x), inputs1)))
+            except Exception as e:
+                print 'Fail for %s with Exception: %s' % (formula, e)
             for i, a in enumerate(inputs1):
                 str_output = solver._solve(formula['s'], Int64(a))
                 if (str_output != outputs[i]):
@@ -73,28 +81,42 @@ class SolverTestCase(unittest.TestCase):
                     self.fail('Tree solver and String solver mismatch')
         self.assertGreater(counter, 0)
 
-
+    @attr('fast')
     def test_compare_solvers_shr16(self):
         self._compare_solvers(3, ['shr16'])
+
+    @attr('fast')
     def test_compare_solvers_shr4(self):
         self._compare_solvers(3, ['shr4'])
+
+    @attr('fast')
     def test_compare_solvers_not(self):
         self._compare_solvers(3, ['not'])
+
+    @attr('fast')
     def test_compare_solvers_and_not(self):
         self._compare_solvers(5, ['and', 'not'])
+
+    @attr('fast')
     def test_compare_solvers_or_not(self):
         self._compare_solvers(5, ['or', 'not'])
-    def test_compare_solvers_xor(self):
-        self._compare_solvers(5, ['xor'])
+
+    @attr('fast')
+    def test_compare_solvers_xor_not(self):
+        self._compare_solvers(5, ['xor', 'not'])
+
     def test_compare_solvers_if0_not(self):
-            self._compare_solvers(9, ['if0', 'not'])
+        self._compare_solvers(9, ['if0', 'not'])
     def test_compare_solvers_fold_plus(self):
         self._compare_solvers(9, ['fold', 'not'])
     def test_compare_solvers_tfold_if0(self):
         self._compare_solvers(9, ['tfold', 'if0'])
+    def test_compare_solvers_and_if0_plus(self):
+        self._compare_solvers(9, ['and', 'if0', 'plus'])
+
+    @attr('fast')
     def test_compare_solvers_plus_not(self):
         self._compare_solvers(5, ['plus', 'not'])
+
     def test_compare_solvers_size_7(self):
         self._compare_solvers(7, None)
-
-SolverTestCase.__test__ = False
