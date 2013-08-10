@@ -96,3 +96,4 @@ class FormulaBuilderTestCase(unittest.TestCase):
             if p.search(b['s']):
                 equels = 1 
         self.assertEquals(equels, 0)
+
