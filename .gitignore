@@ -40,3 +40,6 @@ nosetests.xml
 
 # Vim
 *.swp
+
+# This path is used to save tree templates index during unittests
+/tree_index/
