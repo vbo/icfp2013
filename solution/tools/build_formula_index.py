@@ -333,13 +333,13 @@ class TreeTemplatesIndex(object):
 
     def generate_formulas(self, size, allowed_ops=None):
 
-        templates_level = size - 1
+        templates_level = size - 1 # substracting cost of root lambda
 
         if allowed_ops is not None:
             allowed_ops = set(allowed_ops)
 
         if allowed_ops and Operators.TFOLD in allowed_ops:
-            templates_level = templates_level - 3
+            templates_level = templates_level - 4 # fold (2), id (1), zero (1) == 4
             is_tfold = True
         else:
             is_tfold = False
