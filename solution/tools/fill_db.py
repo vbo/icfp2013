@@ -3,6 +3,7 @@ import os
 import tempfile
 import filecmp
 import sys
+import time
 
 from ..operators import get_templated_operators
 from . import build_formula_index
@@ -57,6 +58,7 @@ if __name__ == '__main__':
             help='Do not call gzip after outputting sql')
     parser.add_argument("--noparse", action="store_true", dest="noparse", default=False,
             help="Don't use parser - use solve_formula to evaluate programs")
+    parser.add_argument("--timeout", type=int, default=0)
 
     args = parser.parse_args()
 
@@ -65,7 +67,10 @@ if __name__ == '__main__':
 
     index_dispatcher = build_formula_index.TreeIndexDispatcher(args.index_basedir)
 
-    ops_to_filter = set(args.commaseparated_ops.split(','))
+    if args.commaseparated_ops:
+        ops_to_filter = set(args.commaseparated_ops.split(','))
+    else:
+        ops_to_filter = None
 
     offset = args.offset
     limit = args.limit
@@ -119,15 +124,29 @@ if __name__ == '__main__':
         # Pick specialized index to reduce space for problems without certain elements (like fold)
         index = index_dispatcher.get_index(problem_conf['operators'])
 
+        need_to_delete_sql = False
+
         try:
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
+                start_time = time.time()
                 for program_query in generate_sql_for_problem(problem_conf, index, args.parallelize, use_parser=not args.noparse):
                     fp.write(program_query)
-        except Exception as e:
+                    if args.timeout:
+                        elapsed = time.time() - start_time
+                        if elapsed > args.timeout:
+                            print "Skipping problem because of timeout"
+                            need_to_delete_sql = True
+                            break
+        except BaseException as e:
             if os.path.isfile(problem_sql_path):
                 os.remove(problem_sql_path)
             raise
+
+        if need_to_delete_sql:
+            if os.path.isfile(problem_sql_path):
+                os.remove(problem_sql_path)
+            continue
 
         if not args.nocompress:
             cmd = 'gzip -f "%s"' % problem_sql_path
