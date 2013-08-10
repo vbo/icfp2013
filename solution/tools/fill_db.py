@@ -40,11 +40,11 @@ if __name__ == '__main__':
     parser.add_argument("--ninputs", type=int, dest='ninputs', default=256)
     parser.add_argument("--offset", type=int, dest='offset', default=0)
     parser.add_argument("--limit", type=int, dest='limit', default=1)
+    parser.add_argument("--group_id", type=int, dest='group_id', default=None)
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
     parser.add_argument("--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
     parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
-    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
 
     args = parser.parse_args()
 
@@ -55,6 +55,8 @@ if __name__ == '__main__':
 
     offset = args.offset
     limit = args.limit
+    group_id = args.group_id
+    #TODO: fill_db by group_id
     assert_sql_path = None
     problems_getter = None
     if args.assert_only:
