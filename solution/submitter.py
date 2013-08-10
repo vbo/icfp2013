@@ -10,9 +10,10 @@ from .problems import original_problems
 api.request_delay = 3
 
 class NotSolvedError(BaseException):
-    def __init__(self, message, outputs, variants):
+    def __init__(self, message, inputs, outputs, variants):
         super(BaseException, self).__init__()
         self.message = message
+        self.inputs = inputs
         self.outputs = outputs
         self.variants = variants
 
@@ -69,7 +70,9 @@ def submit(problem):
     new_outputs = []
 
     guesses_used = 0
+    comforming_variants = []
     for variant in variants:
+        comforming_variants.append(variant)
         if not is_program_conform_to_data(variant, new_inputs, new_outputs):
             print "skipping variant because it doesn't work on new data"
             continue
@@ -86,7 +89,7 @@ def submit(problem):
             new_input, new_output, _my_bad_output = map(lambda x: int(x, base=16), res['values'])
             new_inputs.append(new_input)
             new_outputs.append(new_output)
-    raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), readable_outputs, variants)
+    raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), inputs, readable_outputs, comforming_variants)
 
 
 if __name__ == '__main__':
