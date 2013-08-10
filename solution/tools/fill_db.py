@@ -1,5 +1,8 @@
 import argparse
 import os
+import tempfile
+import filecmp
+import sys
 
 from . import build_formula_index
 from ..lang.int64 import generate_inputs
@@ -40,6 +43,8 @@ if __name__ == '__main__':
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
     parser.add_argument("--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
+    parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
+    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
 
     args = parser.parse_args()
 
@@ -50,7 +55,10 @@ if __name__ == '__main__':
 
     offset = args.offset
     limit = args.limit
+    assert_sql_path = None
     problems_getter = None
+    if args.assert_only:
+        args.force = True
     if args.fixture:
         problems_getter = lambda: problems.fixture_problems
     problems_without_dupes = list(problems.get_problems_without_dupes(problems_getter))
@@ -70,6 +78,12 @@ if __name__ == '__main__':
         )
 
         problem_sql_path = os.path.join(args.sql_basedir, 'problem.%s.sql' % group_id)
+        if args.assert_only:
+            if not os.path.isfile(problem_sql_path):
+                print "Generate %s first to assert" % (problem_sql_path,)
+                continue
+            assert_sql_path = problem_sql_path
+            problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
         if not args.force and os.path.isfile(problem_sql_path):
             print 'Skipping generating SQL for problem group %d.' % group_id
@@ -88,3 +102,12 @@ if __name__ == '__main__':
             if os.path.isfile(problem_sql_path):
                 os.remove(problem_sql_path)
             raise
+        if args.assert_only:
+            diff = "diff %s %s" % (problem_sql_path, assert_sql_path)
+            print "Performing", diff
+            sys.stdout.flush()
+            cmp = filecmp.cmp(problem_sql_path, assert_sql_path)
+            if not cmp:
+                os.system(diff)
+                raise Exception("not empty", diff)
+            print "Empty diff: OK"

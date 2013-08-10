@@ -28,12 +28,13 @@ class Int64(long):
 
 Int64.ZERO = Int64(0)
 Int64.ONE = Int64(1)
+Int64.MAX = Int64(Int64.max)
 
 
 def generate_inputs(ninputs, seed=None):
     yield Int64.ZERO
     yield Int64.ONE
-    yield Int64.max
+    yield Int64.MAX
 
     if seed is not None:
         set_seed(seed)

@@ -9,7 +9,7 @@ def get_problems_without_dupes(getter=None):
 
 
 fixture_problems = [
-    {'operators': ['plus', 'not'], 'group_id': -1, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 10},
+    {'operators': ['plus', 'not'], 'group_id': -1, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 5},
     {'operators': None, 'group_id': -10, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 9},
 ]
 
