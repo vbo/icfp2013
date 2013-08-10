@@ -39,6 +39,8 @@ if __name__ == '__main__':
     parser.add_argument("--limit", type=int, dest='limit', default=1)
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
     parser.add_argument("--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
+    parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
+
     args = parser.parse_args()
 
     if not os.path.isdir(args.sql_basedir):
@@ -49,7 +51,10 @@ if __name__ == '__main__':
     inputs = list(generate_inputs(args.ninputs))
     offset = args.offset
     limit = args.limit
-    problems_without_dupes = list(problems.get_problems_without_dupes())
+    problems_getter = None
+    if args.fixture:
+        problems_getter = lambda: problems.fixture_problems
+    problems_without_dupes = list(problems.get_problems_without_dupes(problems_getter))
 
     inputs_hash = get_int64_array_hash(inputs)
     inputs_readable = '|'.join('%016x' % x for x in inputs)

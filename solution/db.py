@@ -1,9 +1,11 @@
 import psycopg2
 
-db = psycopg2.connect("dbname=icfp2013_01 user=vbo")
+db = None
 
 
 def query(sql, fill_data=tuple()):
+    if not db:
+        db = psycopg2.connect("dbname=icfp2013_01 user=vbo")
     cur = db.cursor()
     cur.execute(sql, fill_data)
     db.commit()
