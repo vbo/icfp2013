@@ -4,96 +4,41 @@ import re
 
 class FormulaBuilderTestCase(unittest.TestCase):
 
-    def test_test(self):
-        p = re.compile('\(lambda \(id\) \(not \(not 1\)\)\)')
-        a = build_formula_index.get_formulas_from_index(4)
-        equels = 0
-        for b in a:
-            if p.match(b['s']):
-               equels = 1 
-        self.assertEquals(equels,1)
+    tree_index_root = './tree_index'
 
-    def test_test1(self):
-        p = re.compile('\(lambda \(id\) \(plus id 1\)\)')
-        a = build_formula_index.get_formulas_from_index(4)
-        equels = 0
-        for b in a:
-            if p.match(b['s']):
-               equels = 1 
-        self.assertEquals(equels,1)
+    formulas = [
+        ('\(lambda \(id\) \(not \(not 1\)\)\)', 4),
+        ('\(lambda \(id\) \(plus id 1\)\)', 4),
+        ('\(lambda \(id\) \(if0 .*and', 7)
+        ('\(lambda \(id\) \(if0 .*or', 7),
+        ('\(lambda \(id\) \(if0 .*xor', 7),
+        ('\(lambda \(id\) \(fold', 7),
+    ]
 
-    def test_7_level_if0_and(self):
-        p = re.compile('\(lambda \(id\) \(if0 .*and')
-        a = build_formula_index.get_formulas_from_index(7)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-               equels = 1 
-        self.assertEquals(equels, 1)
-        
-    def test_7_level_if0_or(self):
-        p = re.compile('\(lambda \(id\) \(if0 .*or')
-        a = build_formula_index.get_formulas_from_index(7)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-               equels = 1 
-        self.assertEquals(equels, 1)
+    @classmethod
+    def setUpClass(cls):
+        self.index = build_formula_index(self.tree_index_root)
+        self.formulas_cache = {}
 
-    def test_7_level_if0_xor(self):
-        p = re.compile('\(lambda \(id\) \(if0 .*xor')
-        a = build_formula_index.get_formulas_from_index(7)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-               equels = 1 
-        self.assertEquals(equels, 1)
+    def _get_cached_formulas(self, size):
+        if size not in self.formulas_cache:
+            self.formulas_cache[size] = list(self.index.generate_formulas(size))
 
-    def test_7_level_Tfold(self):
-        p = re.compile('\(lambda \(id\) \(fold')
-        a = build_formula_index.get_formulas_from_index(7)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-                equels = 1 
-        self.assertEquals(equels, 1)
+        return self.formulas_cache[size]
 
-    def test_8_level_Tfold_params_const(self):
-        p = re.compile('\(lambda \(id\) \(fold 1 id')
-        a = build_formula_index.get_formulas_from_index(8)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-                equels = 1 
-        self.assertEquals(equels, 1)
+    def _check_formula_is_present(self, formula_regexp_text, size):
+        self._get_cached_formulas(size)
 
-    def test_param(self):
-        p = re.compile('\(lambda')
-        opers = ['not', 'shl1', 'shr1']
-        a = build_formula_index.get_formulas_from_index(3, opers)
-        mas=[]
-        mas_equels=['(lambda (id) (not 1))',
-                '(lambda (id) (not 0))',
-                '(lambda (id) (not id))',
-                '(lambda (id) (shl1 1))',
-                '(lambda (id) (shl1 0))',
-                '(lambda (id) (shl1 id))',
-                '(lambda (id) (shr1 1))',
-                '(lambda (id) (shr1 0))',
-                '(lambda (id) (shr1 id))'
-        ]
-        for b in a:
-            if p.search(b['s']):
-                mas.append(b['s']);
-        self.assertEquals(mas_equels, mas)
+        formula_regexp = re.compile(formula_regexp_text)
+        equals = 0
 
-    def test_8_level_Tfold_params_const(self):
-        p = re.compile('\(lambda \(id\).*shr1[^6]')
-        opers = ['fold', 'if0', 'shr16', 'shr4']
-        a = build_formula_index.get_formulas_from_index(8, opers)
-        equels = 0
-        for b in a:
-            if p.search(b['s']):
-                equels = 1 
-        self.assertEquals(equels, 0)
+        for f in formulas:
+            if formula_regexp.match(f['s']):
+               equals = 1
+               break
 
+        self.assertEqual(equals, 1, "Formula not found: '%s'" % formula_regexp_text)
+
+    def test_formulas(self):
+        for f_regexp, size in formulas:
+            self._check_formula_is_present(f_regexp, size)
