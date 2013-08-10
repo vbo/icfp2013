@@ -6,15 +6,17 @@ from .. import api, config
 
 ex_train = config.example_train
 
-api.request_delay = 5
 
 class ApiTestCase(unittest.TestCase):
+
+    def setUp(self):
+        api.auto_retry = False
+        api.request_delay = 3
 
     @attr('ddos')
     def test_connection(self):
         base_url = "http://robopoker.org/icfp/train"
         api.call_url = lambda x: base_url + "?sleep=40"
-        api.auto_retry = True
         api.timeout = 1
         with self.assertRaises(api.Timeout):
             result = api.train()
