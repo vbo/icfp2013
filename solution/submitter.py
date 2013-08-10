@@ -45,7 +45,7 @@ def submit(problem):
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: int(x, base=16), readable_outputs))
 
-    sql = "SELECT code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s";
+    sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
     variants = [row[0] for row in db.query(sql, (problem['size'], operators, inputs_hash, outputs_hash))]
 
     new_inputs = []
