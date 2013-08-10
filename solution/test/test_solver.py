@@ -73,6 +73,7 @@ class SolverTestCase(unittest.TestCase):
                 outputs = list(solver.solve_formula(formula, map(lambda x: Int64(x), inputs1)))
             except Exception as e:
                 print 'Fail for %s with Exception: %s' % (formula, e)
+                self.fail('Could not get outputs from formula')
             for i, a in enumerate(inputs1):
                 str_output = solver._solve(formula['s'], Int64(a))
                 if (str_output != outputs[i]):
