@@ -4,6 +4,7 @@ import tempfile
 import filecmp
 import sys
 
+from ..operators import get_templated_operators
 from . import build_formula_index
 from ..lang.int64 import generate_inputs
 from .. import solver
@@ -35,23 +36,28 @@ def generate_sql_for_problem(problem, index):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("index_basedir")
-    parser.add_argument("sql_basedir")
+    parser.add_argument("--index", type=str, dest='index_basedir', default='./tree_index')
+    parser.add_argument("--outdir", type=str, default='./sql/problems')
+    parser.add_argument("--ops", type=str, dest='commaseparated_ops', default='')
     parser.add_argument("--ninputs", type=int, dest='ninputs', default=256)
     parser.add_argument("--offset", type=int, dest='offset', default=0)
     parser.add_argument("--limit", type=int, dest='limit', default=1)
     parser.add_argument("--group_id", type=int, dest='group_id', default=None)
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
-    parser.add_argument("--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
+    parser.add_argument("-f", "--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
     parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
+    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
+    parser.add_argument("--nocompress", action="store_true", dest="nocompress", default=False)
 
     args = parser.parse_args()
 
-    if not os.path.isdir(args.sql_basedir):
-        os.makedirs(args.sql_basedir)
+    if not os.path.isdir(args.outdir):
+        os.makedirs(args.outdir)
 
     index_dispatcher = build_formula_index.TreeIndexDispatcher(args.index_basedir)
+
+    ops_to_filter = set(args.commaseparated_ops.split(','))
 
     offset = args.offset
     limit = args.limit
@@ -59,11 +65,21 @@ if __name__ == '__main__':
     #TODO: fill_db by group_id
     assert_sql_path = None
     problems_getter = None
+
     if args.assert_only:
         args.force = True
+
     if args.fixture:
         problems_getter = lambda: problems.fixture_problems
-    problems_without_dupes = list(problems.get_problems_without_dupes(problems_getter))
+
+    if ops_to_filter:
+        problems_filter = lambda problem: not (set(get_templated_operators(problem['operators'])) - ops_to_filter)
+    else:
+        problems_filter = None
+
+    problems_without_dupes = filter(problems_filter, problems.get_problems_without_dupes(problems_getter))
+
+    print 'Total number of problems after applying filter:', len(problems_without_dupes)
 
     for problem_conf in problems_without_dupes[offset:offset + limit]:
         group_id = problem_conf['group_id']
@@ -79,7 +95,7 @@ if __name__ == '__main__':
             (inputs_hash, inputs_readable)
         )
 
-        problem_sql_path = os.path.join(args.sql_basedir, 'problem.%s.sql' % group_id)
+        problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
         if args.assert_only:
             if not os.path.isfile(problem_sql_path):
                 print "Generate %s first to assert" % (problem_sql_path,)
@@ -87,7 +103,7 @@ if __name__ == '__main__':
             assert_sql_path = problem_sql_path
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
-        if not args.force and os.path.isfile(problem_sql_path):
+        if not args.force and os.path.isfile(problem_sql_path) or os.path.isfile(problem_sql_path + '.gz'):
             print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
@@ -104,6 +120,12 @@ if __name__ == '__main__':
             if os.path.isfile(problem_sql_path):
                 os.remove(problem_sql_path)
             raise
+
+        if not args.nocompress:
+            cmd = 'gzip -f "%s"' % problem_sql_path
+            print cmd
+            os.system(cmd)
+
         if args.assert_only:
             diff = "diff %s %s" % (problem_sql_path, assert_sql_path)
             print "Performing", diff
@@ -111,5 +133,7 @@ if __name__ == '__main__':
             cmp = filecmp.cmp(problem_sql_path, assert_sql_path)
             if not cmp:
                 os.system(diff)
-                raise Exception("not empty", diff)
+                print "Diff not empty:"
+                print diff
+                sys.exit(1)
             print "Empty diff: OK"
