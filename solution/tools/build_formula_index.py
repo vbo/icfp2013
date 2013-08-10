@@ -378,12 +378,6 @@ class TreeTemplatesIndex(object):
                             {
                                 'operator': Operators.ZERO,
                             },
-                            {
-                                'operator': Operators.ID2,
-                            },
-                            {
-                                'operator': Operators.ID3,
-                            },
                             formula,
                         ),
                     }

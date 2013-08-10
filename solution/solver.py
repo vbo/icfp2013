@@ -134,7 +134,7 @@ def _solve_formula(formula):
         def fold_helper(id2, id3):
             id_table[Operators.ID2] = id2
             id_table[Operators.ID3] = id3
-            return _solve_formula(args[4])
+            return _solve_formula(args[2])
 
         return e.fold(
             _solve_formula(args[0]),
