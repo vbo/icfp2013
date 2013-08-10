@@ -1,5 +1,8 @@
 import argparse
 import os
+import tempfile
+import filecmp
+import sys
 
 from . import build_formula_index
 from ..lang.int64 import generate_inputs
@@ -40,6 +43,8 @@ if __name__ == '__main__':
     parser.add_argument("--parallel", action='store_true', dest='parallelize')
     parser.add_argument("--force", action='store_true', dest='force', help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
+    parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
+    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
 
     args = parser.parse_args()
 
@@ -48,33 +53,40 @@ if __name__ == '__main__':
 
     index_dispatcher = build_formula_index.TreeIndexDispatcher(args.index_basedir)
 
-    inputs = list(generate_inputs(args.ninputs))
     offset = args.offset
     limit = args.limit
+    assert_sql_path = None
     problems_getter = None
+    if args.assert_only:
+        args.force = True
     if args.fixture:
         problems_getter = lambda: problems.fixture_problems
     problems_without_dupes = list(problems.get_problems_without_dupes(problems_getter))
 
-    inputs_hash = get_int64_array_hash(inputs)
-    inputs_readable = '|'.join('%016x' % x for x in inputs)
-
-    query = (
-        "INSERT INTO inputs"
-        "(inputs_hash, inputs)"
-        "VALUES ('%s', '%s');\n" %
-        (inputs_hash, inputs_readable)
-    )
-
-    with open(os.path.join(args.sql_basedir, 'inputs.sql'), 'a') as fp:
-        fp.write(query)
-
     for problem_conf in problems_without_dupes[offset:offset + limit]:
         group_id = problem_conf['group_id']
+
+        inputs = list(generate_inputs(args.ninputs, seed=group_id))
+        inputs_hash = get_int64_array_hash(inputs)
+        inputs_readable = '|'.join('%016x' % x for x in inputs)
+
+        inputs_query = (
+            "INSERT INTO inputs"
+            "(inputs_hash, inputs)"
+            "VALUES ('%s', '%s');\n" %
+            (inputs_hash, inputs_readable)
+        )
+
         problem_sql_path = os.path.join(args.sql_basedir, 'problem.%s.sql' % group_id)
+        if args.assert_only:
+            if not os.path.isfile(problem_sql_path):
+                print "Generate %s first to assert" % (problem_sql_path,)
+                continue
+            assert_sql_path = problem_sql_path
+            problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
         if not args.force and os.path.isfile(problem_sql_path):
-            print 'Skipping generating SQL for problem group %d.' % group_id
+            print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
         print 'Generating SQL for problem group %d, saving to "%s"' % (group_id, problem_sql_path)
@@ -83,9 +95,19 @@ if __name__ == '__main__':
 
         try:
             with open(problem_sql_path, 'w') as fp:
-                for query in generate_sql_for_problem(problem_conf, index):
-                    fp.write(query)
+                fp.write(inputs_query)
+                for program_query in generate_sql_for_problem(problem_conf, index):
+                    fp.write(program_query)
         except Exception as e:
             if os.path.isfile(problem_sql_path):
                 os.remove(problem_sql_path)
             raise
+        if args.assert_only:
+            diff = "diff %s %s" % (problem_sql_path, assert_sql_path)
+            print "Performing", diff
+            sys.stdout.flush()
+            cmp = filecmp.cmp(problem_sql_path, assert_sql_path)
+            if not cmp:
+                os.system(diff)
+                raise Exception("not empty", diff)
+            print "Empty diff: OK"

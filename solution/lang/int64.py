@@ -1,4 +1,5 @@
 from random import randint
+from random import seed as set_seed
 
 
 class Int64(long):
@@ -27,11 +28,17 @@ class Int64(long):
 
 Int64.ZERO = Int64(0)
 Int64.ONE = Int64(1)
+Int64.MAX = Int64(Int64.max)
 
 
-def generate_inputs(ninputs):
+def generate_inputs(ninputs, seed=None):
     yield Int64.ZERO
     yield Int64.ONE
+    yield Int64.MAX
 
-    for a in range(ninputs - 2):
+    if seed is not None:
+        set_seed(seed)
+
+    for a in range(ninputs - 3):
         yield Int64.random()
+
