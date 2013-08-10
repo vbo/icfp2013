@@ -73,26 +73,26 @@ class SolverTestCase(unittest.TestCase):
         self.assertGreater(counter, 0)
 
 
-    def test_compare_solvers_xor(self):
-        self._compare_solvers(5, ['xor'])
     def test_compare_solvers_shr16(self):
         self._compare_solvers(3, ['shr16'])
     def test_compare_solvers_shr4(self):
         self._compare_solvers(3, ['shr4'])
     def test_compare_solvers_not(self):
         self._compare_solvers(3, ['not'])
-    def test_compare_solvers_and(self):
+    def test_compare_solvers_and_not(self):
         self._compare_solvers(5, ['and', 'not'])
-    def test_compare_solvers_or(self):
+    def test_compare_solvers_or_not(self):
         self._compare_solvers(5, ['or', 'not'])
-    def test_compare_solvers_if0(self):
+    def test_compare_solvers_xor(self):
+        self._compare_solvers(5, ['xor'])
+    def test_compare_solvers_if0_not(self):
             self._compare_solvers(9, ['if0', 'not'])
     def test_compare_solvers_fold_plus(self):
         self._compare_solvers(9, ['fold', 'not'])
     def test_compare_solvers_tfold_if0(self):
         self._compare_solvers(9, ['tfold', 'if0'])
-    def test_compare_solvers_plus(self):
-        self._compare_solvers(5, ['plus'])
+    def test_compare_solvers_plus_not(self):
+        self._compare_solvers(5, ['plus', 'not'])
     def test_compare_solvers_size_7(self):
         self._compare_solvers(7, None)
 
