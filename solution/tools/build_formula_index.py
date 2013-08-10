@@ -1,7 +1,7 @@
 import itertools
 import os
 
-from ..operators import Operators
+from ..operators import Operators, get_templated_operators
 
 
 class TreeVar(int):
@@ -171,32 +171,36 @@ class TemplatedProgramTreeNode(object):
         return tree
 
 
-def get_tree_templates(size):
+def get_tree_templates(size, allowed_ops=None):
 
     if size == 1:
         yield TreeLevelTemplate(size, Operators.TERMINAL)
         return
 
-    yield TreeLevelTemplate(size, Operators.OP1, TreeVar(size - 1))
+    if allowed_ops is None or Operators.OP1 in allowed_ops:
+        yield TreeLevelTemplate(size, Operators.OP1, TreeVar(size - 1))
 
     # Since all binary operators are commutative, we don't need to generate half of possible combinations
-    for i in range(1, (size + 1) // 2):
-        yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
+    if allowed_ops is None or Operators.OP2 in allowed_ops:
+        for i in range(1, (size + 1) // 2):
+            yield TreeLevelTemplate(size, Operators.OP2, (TreeVar(i), TreeVar(size - 1 - i)))
 
-    if0_limit = size - 1
+    if allowed_ops is None or Operators.IF0 in allowed_ops:
+        if0_limit = size - 1
 
-    for i in range(1, if0_limit - 1):
-        for j in range(i + 1, if0_limit):
-            yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(if0_limit - j)))
+        for i in range(1, if0_limit - 1):
+            for j in range(i + 1, if0_limit):
+                yield TreeLevelTemplate(size, Operators.IF0, (TreeVar(i), TreeVar(j - i), TreeVar(if0_limit - j)))
 
-    fold_limit = size - 2
+    if allowed_ops is None or Operators.FOLD in allowed_ops:
+        fold_limit = size - 2
 
-    for i in range(1, fold_limit - 1):
-        for j in range(i + 1, fold_limit):
-            yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(fold_limit - j)))
+        for i in range(1, fold_limit - 1):
+            for j in range(i + 1, fold_limit):
+                yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(fold_limit - j)))
 
 
-def expand_tree_templates(size, tree_indexes):
+def expand_tree_templates(size, tree_indexes, allowed_ops=None):
     '''
     Use carefully:
 
@@ -224,14 +228,14 @@ def expand_tree_templates(size, tree_indexes):
     '''
 
     if size == 1:
-        for t in get_tree_templates(size):
+        for t in get_tree_templates(size, allowed_ops):
             yield TemplatedProgramTreeNode(t.operator, size=size)
         return
 
     if size - 1 not in tree_indexes:
         raise ValueError('Cannot build index for size %d without indexes for sizes 1..%d' % (size, size - 1))
 
-    for tree_template in get_tree_templates(size):
+    for tree_template in get_tree_templates(size, allowed_ops=allowed_ops):
         indexes = map(tree_indexes.get, tree_template.treevars)
 
         for subtrees_combination in itertools.product(*indexes):
@@ -245,7 +249,7 @@ def expand_tree_templates(size, tree_indexes):
 
 class TreeTemplatesIndex(object):
 
-    def __init__(self, basedir, maxsize_to_keep_in_memory=16):
+    def __init__(self, basedir, maxsize_to_keep_in_memory=16, allowed_ops=None):
         self.basedir = basedir
 
         if not os.path.isdir(basedir):
@@ -253,6 +257,10 @@ class TreeTemplatesIndex(object):
 
         self.maxsize_to_keep_in_memory = maxsize_to_keep_in_memory
         self.inmemory_index = {}
+
+        self.allowed_ops = set(allowed_ops) if allowed_ops is not None else None
+        if allowed_ops is not None:
+            self.allowed_ops_str = '_'.join(allowed_ops)
 
     def __contains__(self, size):
         return size in self.inmemory_index \
@@ -306,18 +314,22 @@ class TreeTemplatesIndex(object):
             if not template_entry.startswith('.')]
 
     def get_templates_filepath(self, size):
-        return os.path.join(self.basedir, 'templates.%d.txt' % size)
+        if self.allowed_ops is None:
+            filename = 'templates.%d.txt' % size
+        else:
+            filename = 'templates:%s.%d.txt' % (self.allowed_ops_str, size)
+        return os.path.join(self.basedir, filename)
 
     def generate_templates(self, maxsize):
         for size in range(1, maxsize + 1):
-            self[size] = expand_tree_templates(size, self)
+            self[size] = expand_tree_templates(size, self, self.allowed_ops)
 
     def generate_missing_templates(self, maxsize):
         max_generated_level = max(self.keys() or [0])
 
         for size in range(max_generated_level + 1, maxsize + 1):
             print "GENERATING TEMPLATES FOR SIZE %d" % size
-            self[size] = expand_tree_templates(size, self)
+            self[size] = expand_tree_templates(size, self, self.allowed_ops)
 
     def generate_formulas(self, size, allowed_ops=None):
 
@@ -381,6 +393,51 @@ class TreeTemplatesIndex(object):
                 formula['s'] = formula_str
                 formula['size'] = size
                 yield formula
+
+
+class TreeIndexDispatcher(object):
+    '''
+    Distribution of problems grouped by allowed operators:
+        (1, ('if0',)),
+        (3, ('fold', 'if0', 'op2')),
+        (5, ('op1',)),
+        (6, ('op2',)),
+        (7, ('fold', 'if0', 'op1')),
+        (9, ('if0', 'op1')),
+        (18, ('if0', 'op2')),
+        (61, ('op1', 'op2')),
+        (75, ('fold', 'op1', 'op2')),
+        (288, ('fold', 'if0', 'op1', 'op2')),
+        (698, ('if0', 'op1', 'op2'))
+    '''
+    existing_ops = [
+        ('if0',),
+        ('fold', 'if0', 'op2'),
+        ('op1',),
+        ('op2',),
+        ('fold', 'if0', 'op1'),
+        ('if0', 'op1'),
+        ('if0', 'op2'),
+        ('op1', 'op2'),
+        ('fold', 'op1', 'op2'),
+        #('fold', 'if0', 'op1', 'op2'),
+        ('if0', 'op1', 'op2'),
+    ]
+
+    def __init__(self, basedir, maxsize_to_keep_in_memory=20):
+        self.basedir = basedir
+        self.maxsize_to_keep_in_memory = maxsize_to_keep_in_memory
+
+        self.default_index = TreeTemplatesIndex(self.basedir, self.maxsize_to_keep_in_memory - 5)
+
+        self.indexes = dict(
+            (ops, TreeTemplatesIndex(self.basedir, self.maxsize_to_keep_in_memory, allowed_ops=ops))
+             for ops in self.existing_ops)
+
+    def get_index(self, allowed_ops):
+        return self.default_index \
+            if allowed_ops is None \
+            else self.indexes.get(get_templated_operators(allowed_ops), self.default_index)
 
 
 def formula_to_string(formula):

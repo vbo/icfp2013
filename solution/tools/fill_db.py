@@ -44,7 +44,8 @@ if __name__ == '__main__':
     if not os.path.isdir(args.sql_basedir):
         os.makedirs(args.sql_basedir)
 
-    index = build_formula_index.TreeTemplatesIndex(args.index_basedir)
+    index_dispatcher = build_formula_index.TreeIndexDispatcher(args.index_basedir)
+
     inputs = list(generate_inputs(args.ninputs))
     offset = args.offset
     limit = args.limit
@@ -72,6 +73,9 @@ if __name__ == '__main__':
             continue
 
         print 'Generating SQL for problem group %d, saving to "%s"' % (group_id, problem_sql_path)
+        # Pick specialized index to reduce space for problems without certain elements (like fold)
+        index = index_dispatcher.get_index(problem_conf['operators'])
+
         try:
             with open(problem_sql_path, 'w') as fp:
                 for query in generate_sql_for_problem(problem_conf, index):

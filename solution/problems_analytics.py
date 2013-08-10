@@ -3,7 +3,7 @@ from operator import itemgetter
 import pprint
 
 from .problems import original_problems, get_problems_without_dupes
-from .operators import Operators
+from .operators import get_templated_operators
 
 
 def get_problems_distribution(problems, grouper):
@@ -30,22 +30,6 @@ def get_size_distribution(problems):
 
 def get_templated_operators_distribution(problems):
     return get_problems_distribution(problems, lambda p: get_templated_operators(p['operators']))
-
-
-def get_templated_operators(operators):
-    templated_operators = set()
-
-    for op in operators:
-        if op in Operators.UNARY:
-            templated_operators.add(Operators.OP1)
-        elif op in Operators.BINARY:
-            templated_operators.add(Operators.OP2)
-        elif op == 'tfold':
-            continue
-        else:
-            templated_operators.add(op)
-
-    return tuple(sorted(templated_operators))
 
 
 if __name__ == '__main__':
