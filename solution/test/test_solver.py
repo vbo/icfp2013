@@ -97,3 +97,4 @@ class SolverTestCase(unittest.TestCase):
     def test_compare_solvers_size_7(self):
         self._compare_solvers(7, None)
 
+SolverTestCase.__test__ = False

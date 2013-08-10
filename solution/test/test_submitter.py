@@ -60,3 +60,5 @@ class SubmitterTestCase(unittest.TestCase):
                     e.variants, "\n".join(map(lambda (x, y): "%s=>%s" % (x, y), itertools.izip(e.inputs, e.outputs)))
                 )
             raise
+
+SubmitterTestCase.__test__ = False
