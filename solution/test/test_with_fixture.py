@@ -1,6 +1,7 @@
 import json, unittest, re, sys
 from .. import solver, api, config
 from ..tools import build_formula_index
+from nose.plugins.attrib import attr
 
 ex_train = config.example_train
 

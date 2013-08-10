@@ -9,6 +9,7 @@ from ..tools import build_formula_index
 from ..lang.int64 import generate_inputs
 from .. import solver
 from ..lang import Int64
+from nose.plugins.attrib import attr
 
 api.request_delay = 0
 
