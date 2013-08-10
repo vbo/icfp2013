@@ -26,12 +26,9 @@ class SolutionTestRange(unittest.TestCase):
 
     def _test_range(self,size):
         programs = []
-
         index = build_formula_index.TreeTemplatesIndex(self.tree_index_root)
-
         for data in index.generate_formulas(size):
             programs.append(data["s"])
-
         result = api.train(size)
         program = result["challenge"]
         program = self._transformXsToIds(program)
