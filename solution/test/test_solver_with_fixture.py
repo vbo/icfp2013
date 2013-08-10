@@ -15,7 +15,7 @@ class SolverTestWithFixture(unittest.TestCase):
                 conf = json.loads(line)
                 inputs = conf["request"]["input"]
                 results = conf["outputs"]
-                for i, result in enumerate(solver.solve(conf["request"]["challenge"], inputs)):
+                for i, result in enumerate(solver.solve(conf["request"]["challenge"], inputs, parallelize=True)):
                     expected = int(results[i], base=16)
                     self.assertEquals(result, expected, "%s is not %s for %s" % (
                         result, expected, conf["request"]["challenge"]))

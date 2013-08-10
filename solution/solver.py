@@ -1,16 +1,33 @@
+import multiprocessing
+
 import _sexpr
-from _sexpr import Atom, SExpr as Exp, symbol as Symbol
+from _sexpr import Atom, symbol as Symbol
 from lang import Int64, op, e
 
 
 id_table = {}
+_pool = None
 
-def solve(st, args):
-    for arg in args:
-        solved = _solve(st, arg)
-        yield solved
+def solve(st, args, parallelize=False):
+    if parallelize:
+
+        global _pool
+        if _pool is None:
+            _pool = multiprocessing.Pool()
+
+        return _pool.imap(_solve_tuple,
+                          ((st, arg) for arg in args),
+                          chunksize=50)
+    else:
+        return map(_solve_tuple,
+                   ((st, arg) for arg in args))
+
 
 def _solve(st, arg):
+    return _solve_tuple((st, arg))
+
+
+def _solve_tuple((st, arg)):
     top_level_items = _sexpr.parse(st)[0].items
     top_arg_id = top_level_items[1].items[0].value
     id_table[top_arg_id] = arg
@@ -41,8 +58,8 @@ def parse_exp(exp):
         return fold_func
     else:
         raise
-    parsed_args = (parse_exp(arg) for arg in args)
-    return Int64(func(*list(parsed_args)))
+    parsed_args = map(parse_exp, args)
+    return Int64(func(*parsed_args))
 
 def parse_atom(atom):
         if atom.type == Symbol:
@@ -52,5 +69,3 @@ def parse_atom(atom):
                 return Int64(int(id_table[atom.value], base=16))
         elif atom.type == int:
             return Int64(int(atom.value))
-
-

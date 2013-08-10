@@ -1,5 +1,10 @@
-def get_problems_to_solve():
-    return original_problems
+import itertools
+
+
+def get_problems_without_dupes():
+    for group_id, problems in itertools.groupby(original_problems, lambda p: p['group_id']):
+        yield problems.next()
+
 
 original_problems = [
     {'operators': ['and', 'shr16', 'shr4'], 'group_id': 75, 'id': '8RSpib2HhbZulX2t5iPN7oud', 'size': 8},

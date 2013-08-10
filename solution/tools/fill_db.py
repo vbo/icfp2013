@@ -1,8 +1,7 @@
 import argparse
-import time
 
 from . import build_formula_index
-from ..lang.int64 import generate_inputs, Int64
+from ..lang.int64 import generate_inputs
 from .. import solver
 from .. import problems
 
@@ -13,6 +12,7 @@ parser.add_argument("--ninputs", type=int, dest='ninputs', default=256)
 parser.add_argument("--dry-run", action='store_true', dest='dry_run')
 parser.add_argument("--offset", type=int, dest='offset', default=0)
 parser.add_argument("--limit", type=int, dest='limit', default=1)
+parser.add_argument("--parallel", action='store_true', dest='parallelize')
 args = parser.parse_args()
 
 if not args.dry_run:
@@ -22,20 +22,21 @@ index = build_formula_index.TreeTemplatesIndex(args.index_basedir)
 inputs = list(generate_inputs(args.ninputs))
 offset = args.offset
 limit = args.limit
+problems_without_dupes = list(problems.get_problems_without_dupes())
 
 cnt = 0
-for problem_conf in problems.get_problems_to_solve()[offset:offset + limit]:
+for problem_conf in problems_without_dupes[offset:offset + limit]:
     for data in index.generate_formulas(problem_conf["size"], allowed_ops=problem_conf["operators"]):
         cnt += 1
 
-        outputs = list(solver.solve(data["s"], inputs))
+        outputs = list(solver.solve(data["s"], inputs, parallelize=args.parallelize))
 
         db_inputs = "|".join(map(lambda x: ("%016x" % int(str(x), base=16)), inputs))
         db_outputs = "|".join(map(lambda x: "%016x" % int(hex(x).rstrip("L"), base=16), outputs))
         operators = list(data["ops"])
         operators.sort()
         operators = "_".join(operators)
-        assert len(outputs)
+        assert len(db_outputs)
 
         query = (
             "INSERT INTO program"
