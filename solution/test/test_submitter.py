@@ -35,6 +35,7 @@ submitter.get_variants_count = lambda x: 0
 
 class SubmitterTestCase(unittest.TestCase):
 
+    @attr('ddos')
     def test_with_train(self):
         problem = None
         if not problem:

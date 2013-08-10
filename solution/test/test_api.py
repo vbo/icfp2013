@@ -6,14 +6,17 @@ from .. import api, config
 
 ex_train = config.example_train
 
-api.request_delay = 5
 
 class ApiTestCase(unittest.TestCase):
 
+    def setUp(self):
+        api.auto_retry = False
+        api.request_delay = 3
+
+    @attr('ddos')
     def test_connection(self):
         base_url = "http://robopoker.org/icfp/train"
         api.call_url = lambda x: base_url + "?sleep=40"
-        api.auto_retry = True
         api.timeout = 1
         with self.assertRaises(api.Timeout):
             result = api.train()
@@ -21,10 +24,12 @@ class ApiTestCase(unittest.TestCase):
         api.auto_retry = api.default_auto_retry
         api.timeout = api.default_timeout
 
+    @attr('ddos')
     def test_train(self):
         result = api.train(20, "tfold")
         self.assertEquals(result["size"], 20)
 
+    @attr('ddos')
     def test_eval(self):
         with self.assertRaises(api.AlreadySolvedException) as ex:
             result = api.eval([1], ex_train["id"])
@@ -32,6 +37,7 @@ class ApiTestCase(unittest.TestCase):
         result = api.eval([1], None, problem["challenge"])
         self.assertEquals(result["status"], "ok")
 
+    @attr('ddos')
     def test_guess(self):
         with self.assertRaises(api.AlreadySolvedException) as ex:
             api.guess(ex_train["id"], ex_train["challenge"])
