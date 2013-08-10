@@ -3,20 +3,11 @@ from itertools import izip
 from . import db
 from . import api
 from . import solver
+from . import util
 from .problems import original_problems
 
 
 api.request_delay = 3
-
-def get_int64_array_hash(numbers):
-    import hashlib
-    keystr = "|".join(map(hex, numbers))
-    return hashlib.md5(keystr).hexdigest()
-
-
-def fetchone(query, params=None):
-    cur = db.query(query, params)
-    return cur.fetchone()[0]
 
 
 def is_program_conform_to_data(program_text, inputs, outputs):
@@ -33,14 +24,14 @@ def submit(problem):
     print operators
     print problem['size']
 
-    inputs_hash = fetchone(
+    inputs_hash = db.fetchone(
         "SELECT inputs from program WHERE size = %s and operators = %s",
          (problem['size'], operators))
 
     if not inputs_hash:
         raise Exception('There is no data in DB about this problem')
 
-    inputs_readable = fetchone(
+    inputs_readable = db.fetchone(
         "SELECT inputs FROM inputs WHERE inputs_hash = %s",
         (inputs_hash,))
 
@@ -52,7 +43,7 @@ def submit(problem):
         raise Exception('Eval error')
 
     readable_outputs = result['outputs']
-    outputs_hash = get_int64_array_hash(map(lambda x: int(x, base=16), readable_outputs))
+    outputs_hash = util.get_int64_array_hash(map(lambda x: int(x, base=16), readable_outputs))
 
     sql = "SELECT code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s";
     variants = [row[0] for row in db.query(sql, (problem['size'], operators, inputs_hash, outputs_hash))]
