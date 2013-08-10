@@ -16,6 +16,7 @@ class FormulaBuilderTestCase(unittest.TestCase):
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id\d id\d\) \(not \(not id\)\)\)\)\)', 8, ['tfold', 'not'], 7),
         ('\(lambda \(id\) \(fold', 9, ['tfold', 'if0'], 8),
         ('\(lambda \(id\) \(xor id \(or 0 \(shr4 \(shr16 id\)\)\)\)\)', 8, ['xor', 'or', 'shr4', 'shr16'], 9),
+        ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(not \(plus id2 id3\)\)\)\)\)', 9, ['tfold', 'plus', 'not'], 11),
     ]
 
     @classmethod
@@ -37,6 +38,8 @@ class FormulaBuilderTestCase(unittest.TestCase):
         equals = 0
 
         for f in formulas:
+        #    if (number == 11):
+        #       print f['s']
             if formula_regexp.match(f['s']):
                equals = 1
                break

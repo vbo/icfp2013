@@ -42,3 +42,6 @@ class SolverTestCase(unittest.TestCase):
                                         " (shr4 0) (shr4 (shr1 (shr1 (not (if0 (plus (shr4 (xor 1 x_36979)) x_36979)"
                                         " x_36979 x_36979)))))))) x_36979))", 
                                         Int64(0xFFFFFFFFFFFFFFFF)), 0x0000FFFFFFFFFFFF)
+    def test_local_params(self):
+
+        self.assertEquals(solver._solve(" (lambda (x_3739) (fold x_3739 0 (lambda (x_3739 x_3740) (if0 x_3740 x_3739 0))))", Int64(0xFFFADCDEFFFF)), 0)
