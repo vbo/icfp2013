@@ -355,6 +355,26 @@ class TreeTemplatesIndex(object):
                 if is_tfold:
                     formula_str = '(lambda (%s) (fold %s 0 (lambda (%s %s) %s)))' % (
                         Operators.ID, Operators.ID, Operators.ID2, Operators.ID3, formula_to_string(formula))
+
+                    formula = {
+                        'operator': Operators.FOLD,
+                        'ops': ops,
+                        'args': (
+                            {
+                                'operator': Operators.ID,
+                            },
+                            {
+                                'operator': Operators.ZERO,
+                            },
+                            {
+                                'operator': Operators.ID2,
+                            },
+                            {
+                                'operator': Operators.ID3,
+                            },
+                            formula,
+                        ),
+                    }
                 else:
                     formula_str = '(lambda (%s) %s)' % (Operators.ID, formula_to_string(formula))
 
