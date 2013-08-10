@@ -333,6 +333,7 @@ class TreeTemplatesIndex(object):
 
     def generate_formulas(self, size, allowed_ops=None):
 
+        import pdb; pdb.set_trace()
         templates_level = size - 1
 
         if allowed_ops is not None:
@@ -359,7 +360,7 @@ class TreeTemplatesIndex(object):
                         ops.add(Operators.TFOLD)
 
                     # Do not yeld formula if it doesn't have ALL required operators
-                    if not ops.symmetric_difference(allowed_ops):
+                    if ops.symmetric_difference(allowed_ops):
                         continue
 
                 formula['ops'] = ops
