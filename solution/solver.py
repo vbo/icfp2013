@@ -109,7 +109,6 @@ def _solve_formula_tuple((formula, arg)):
 
 def _solve_formula(formula):
     operator = formula['operator']
-
     args = formula.get('args')
 
     if operator in Operators.UNARY or operator in Operators.BINARY:
@@ -128,11 +127,10 @@ def _solve_formula(formula):
             return _solve_formula(args[2])
 
     elif operator == Operators.FOLD:
-
         def fold_helper(id2, id3):
             id_table[Operators.ID2] = id2
             id_table[Operators.ID3] = id3
-            return _solve_formula(args[3])
+            return _solve_formula(args[4])
 
         return e.fold(
             _solve_formula(args[0]),

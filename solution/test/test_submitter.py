@@ -1,5 +1,6 @@
 import unittest
 import tempfile
+import itertools
 
 from .. import api
 from .. import submitter
@@ -35,11 +36,8 @@ class SubmitterTestCase(unittest.TestCase):
 
     def test_with_train(self):
         problem = None
-        #problem = {u'challenge': u'(lambda (x_3739) (fold x_3739 0 (lambda (x_3739 x_3740) (if0 x_3740 x_3739 0))))', u'operators': [u'if0', u'tfold'], u'id': u'blgr5ZCVLyCPe1Ms48fGhMnv', u'size': 9}
-        #{u'challenge': u'(lambda (x_5313) (fold x_5313 0 (lambda (x_5313 x_5314) (shl1 (xor 1 x_5313)))))', u'operators': [u'shl1', u'tfold', u'xor'], u'id': u'6p6JluUDsRl7Aqmg8ox0xndw', u'size': 9}
-        #{u'challenge': u'(lambda (x_5803) (fold x_5803 0 (lambda (x_5803 x_5804) (shr4 (xor x_5803 1)))))', u'operators': [u'shr4', u'tfold', u'xor'], u'id': u'PXTAy0CMrVJB9vXB525Coyoa', u'size': 9}
         if not problem:
-            for i in range(10):
+            for i in range(100):
                 problem = api.train(9)
                 self._try_solve(problem)
         else:
@@ -57,25 +55,8 @@ class SubmitterTestCase(unittest.TestCase):
             submitter.submit(problem)
         except BaseException as e:
             print "Exception: %s\nProblem was: %s\nVariants generated: %s" % (e, problem, mock.generated_variants)
+            if isinstance(e, submitter.NotSolvedError):
+                print "Variants: %s\nInputs=>Outputs:\n%s" % (
+                    e.variants, "\n".join(map(lambda (x, y): "%s=>%s" % (x, y), itertools.izip(e.inputs, e.outputs)))
+                )
             raise
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
