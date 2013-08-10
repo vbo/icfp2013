@@ -37,7 +37,7 @@ class SubmitterTestCase(unittest.TestCase):
     def test_with_train(self):
         problem = None
         if not problem:
-            for i in range(100):
+            for i in range(5):
                 problem = api.train(9)
                 self._try_solve(problem)
         else:
@@ -60,3 +60,5 @@ class SubmitterTestCase(unittest.TestCase):
                     e.variants, "\n".join(map(lambda (x, y): "%s=>%s" % (x, y), itertools.izip(e.inputs, e.outputs)))
                 )
             raise
+
+SubmitterTestCase.__test__ = False
