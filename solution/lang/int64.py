@@ -23,8 +23,8 @@ class Int64(long):
         return cls(randint(0, cls.max))
 
 
-def generate_inputs():
-    for a in range(256):
+def generate_inputs(ninputs):
+    for a in range(ninputs):
         r = Int64.random()
         rstr = str(hex(r)).rstrip("L")
         yield rstr

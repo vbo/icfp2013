@@ -1,4 +1,5 @@
 import itertools
+import os
 
 from ..operators import Operators
 
@@ -114,6 +115,33 @@ class TemplatedProgramTreeNode(object):
             func(arg)
             arg.traverse(func)
 
+    def serialize(self):
+        simple_repr = {
+            'operator': self.operator,
+            'has_fold': self.has_fold,
+            'args': [arg.serialize() for arg in self.args] if self.args is not None else None,
+            'size': self.size,
+        }
+
+        return simple_repr
+
+    @staticmethod
+    def deserialize(data):
+        return TemplatedProgramTreeNode.deserialize_from_simple_repr(eval(data))
+
+    @staticmethod
+    def deserialize_from_simple_repr(simple_repr):
+        args = map(TemplatedProgramTreeNode.deserialize_from_simple_repr,
+                   simple_repr['args']) \
+               if simple_repr['args'] is not None else None
+
+        tree = TemplatedProgramTreeNode(
+            simple_repr['operator'],
+            args,
+            simple_repr['size'])
+        tree.has_fold = simple_repr['has_fold']
+        return tree
+
 
 def get_tree_templates(size):
 
@@ -140,12 +168,12 @@ def get_tree_templates(size):
             yield TreeLevelTemplate(size, Operators.FOLD, (TreeVar(i), TreeVar(j - i), TreeVar(fold_limit - j)))
 
 
-def make_tree_index(size, tree_indexes):
+def expand_tree_templates(size, tree_indexes):
     '''
     Use carefully:
 
     >>> idxs = {}
-    >>> for n in range(1, 19): idxs[n] = list(make_tree_index(n, idxs))
+    >>> for n in range(1, 19): idxs[n] = list(expand_tree_templates(n, idxs))
     >>> [len(idxs[n]) for n in sorted(idxs.keys())]
     [1,
     1,
@@ -187,22 +215,95 @@ def make_tree_index(size, tree_indexes):
 
             yield TemplatedProgramTreeNode(tree_template.operator, args=subtrees_combination, size=size)
 
-def get_index_size(size):
-    idxs = {}
-    for n in range(1, size):
-        idxs[n] = list(make_tree_index(n, idxs))
-    return idxs
+class TreeTemplatesIndex(object):
 
-def get_formulas_from_index(size, allowed_ops=None):
-    idxs = get_index_size(size)
-    for level in idxs:
-        idx = idxs[level]
-        for template in idx:
+    def __init__(self, basedir, maxsize_to_keep_in_memory=10):
+        self.basedir = basedir
+
+        if not os.path.isdir(basedir):
+            os.makedirs(basedir)
+
+        self.maxsize_to_keep_in_memory = maxsize_to_keep_in_memory
+        self.inmemory_index = {}
+
+    def __contains__(self, size):
+        return size in self.inmemory_index \
+               or os.path.isfile(self.get_templates_filepath(size))
+
+    def __getitem__(self, size):
+        result = self.get(size)
+
+        if result is None:
+            raise IndexError("No index for size %d" % size)
+
+    def get(self, size):
+        if size in self.inmemory_index:
+            return self.inmemory_index[size]
+
+        if size <= self.maxsize_to_keep_in_memory:
+            self.generate_templates(size)
+            return self.inmemory_index[size]
+
+        templates_file = self.get_templates_filepath(size)
+
+        if os.path.isfile(templates_file):
+            return itertools.imap(TemplatedProgramTreeNode.deserialize, open(templates_file, 'r'))
+
+        return None
+
+    def __setitem__(self, size, templates):
+        if size <= self.maxsize_to_keep_in_memory:
+            self.inmemory_index[size] = list(templates)
+            return
+
+        out_filename = self.get_templates_filepath(size)
+
+        try:
+            fp = open(out_filename, 'w')
+
+            for t in templates:
+                fp.write(repr(t.serialize()))
+                fp.write('\n')
+        except:
+            if os.path.isfile(out_filename):
+                os.remove(out_filename)
+            raise
+        finally:
+            fp.close()
+
+    def keys(self):
+        return [
+            int(template_entry.split('.')[1])
+            for template_entry in os.listdir(self.basedir)
+            if not template_entry.startswith('.')]
+
+    def get_templates_filepath(self, size):
+        return os.path.join(self.basedir, 'templates.%d.txt' % size)
+
+    def generate_templates(self, maxsize):
+        for size in range(1, maxsize + 1):
+            self[size] = expand_tree_templates(size, self)
+
+    def generate_missing_templates(self, maxsize):
+        max_generated_level = max(self.keys() or [0])
+
+        for size in range(max_generated_level + 1, maxsize + 1):
+            print "GENERATING TEMPLATES FOR SIZE %d" % size
+            self[size] = expand_tree_templates(size, self)
+
+    def generate_formulas(self, size, allowed_ops=None):
+
+        templates_level = size - 1
+        templates = self.get(templates_level)
+
+        if templates is None:
+            raise ValueError('Index for size %d was not built. You need to call index.generate_missing_templates(%d) first.' % (templates_level, templates_level))
+
+        for template in templates:
             for formula in template.values(allowed_ops=allowed_ops):
                 formula['ops'] = set(formula['ops'])
                 if formula['s'][:5] == '(fold':
                     formula['ops'] = formula['ops'].difference(set(['fold'])).union(set(['tfold']))
                 formula['s'] = '(lambda (' + Operators.ID + ') ' + formula['s'] + ')'
-                formula['size'] = level + 1
-                if (formula['size'] == size):
-                    yield formula
+                formula['size'] = size
+                yield formula
