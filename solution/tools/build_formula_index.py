@@ -217,7 +217,7 @@ def expand_tree_templates(size, tree_indexes):
 
 class TreeTemplatesIndex(object):
 
-    def __init__(self, basedir, maxsize_to_keep_in_memory=10):
+    def __init__(self, basedir, maxsize_to_keep_in_memory=16):
         self.basedir = basedir
 
         if not os.path.isdir(basedir):
