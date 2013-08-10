@@ -1,3 +1,6 @@
+def get_problems_to_solve():
+    return original_problems
+
 original_problems = [
     {'operators': ['and', 'shr16', 'shr4'], 'group_id': 75, 'id': '8RSpib2HhbZulX2t5iPN7oud', 'size': 8},
     {'operators': ['if0', 'shl1', 'xor'], 'group_id': 76, 'id': '7uzJ68i3y7yxWRfriDmUjzwv', 'size': 8},
