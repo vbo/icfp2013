@@ -48,19 +48,19 @@ def dump_to_json(problems, path='fixture/problems.jsons'):
 
 
 fixture_problems = [
-    {'operators': None, 'group_id': -3, 'size': 3},
-    {'operators': None, 'group_id': -4, 'size': 4},
-    {'operators': None, 'group_id': -5, 'size': 5},
-    {'operators': None, 'group_id': -6, 'size': 6},
-    {'operators': None, 'group_id': -7, 'size': 7},
-    {'operators': None, 'group_id': -8, 'size': 8},
-    {'operators': None, 'group_id': -9, 'size': 9},
-    {'operators': None, 'group_id': -10, 'size': 10},
-    {'operators': None, 'group_id': -11, 'size': 11},
-    {'operators': None, 'group_id': -12, 'size': 12},
-    {'operators': None, 'group_id': -13, 'size': 13},
-    {'operators': None, 'group_id': -14, 'size': 14},
-    {'operators': None, 'group_id': -15, 'size': 15},
+    {'operators': None, 'id': -3, 'size': 3},
+    {'operators': None, 'id': -4, 'size': 4},
+    {'operators': None, 'id': -5, 'size': 5},
+    {'operators': None, 'id': -6, 'size': 6},
+    {'operators': None, 'id': -7, 'size': 7},
+    {'operators': None, 'id': -8, 'size': 8},
+    {'operators': None, 'id': -9, 'size': 9},
+    {'operators': None, 'id': -10, 'size': 10},
+    {'operators': None, 'id': -11, 'size': 11},
+    {'operators': None, 'id': -12, 'size': 12},
+    {'operators': None, 'id': -13, 'size': 13},
+    {'operators': None, 'id': -14, 'size': 14},
+    {'operators': None, 'id': -15, 'size': 15},
 ]
 
 original_problems = list(load_from_json())
