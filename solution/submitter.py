@@ -51,7 +51,7 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     operators = "_".join(operators)
     sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
     variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
-    return variants, len(variants)
+    return variants
 
 def submit(problem):
     operators = list(problem["operators"])
