@@ -8,8 +8,10 @@ from .operators import Operators
 def get_problems_without_dupes(getter=None):
     if not getter:
         getter = lambda: original_problems
-    for group_id, problems in itertools.groupby(getter(), lambda p: p['group_id']):
-        yield problems.next()
+    return getter()
+    # NO group_id anymore :(
+    #for group_id, problems in itertools.groupby(getter(), lambda p: p['group_id'],):
+    #    yield problems.next()
 
 
 def estimate_simplicity(problem):
