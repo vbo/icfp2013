@@ -8,6 +8,7 @@ from .problems import original_problems
 
 
 api.request_delay = 1
+use_output_index_only = False
 
 class NotSolvedError(BaseException):
     def __init__(self, message, inputs, outputs, variants):
@@ -35,9 +36,13 @@ def get_variants_count(variants):
 
 def load_inputs_from_index(size, operators):
     operators = "_".join(operators)
-    inputs_hash = db.fetchone(
-        "SELECT inputs from program WHERE size = %s and operators = %s",
-        (size, operators))
+    if use_output_index_only:
+        inputs_hash = db.fetchone(
+            "SELECT inputs from program WHERE operators = '*'")
+    else:
+        inputs_hash = db.fetchone(
+            "SELECT inputs from program WHERE size = %s and operators = %s",
+            (size, operators))
     if not inputs_hash:
         raise IndexNotFoundError('There is no data in DB about this problem')
     serialized = db.fetchone(
@@ -49,8 +54,12 @@ def load_inputs_from_index(size, operators):
 
 def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     operators = "_".join(operators)
-    sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
-    variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
+    if use_output_index_only:
+        sql = "SELECT distinct code FROM program WHERE inputs=%s AND outputs=%s"
+        variants = [row[0] for row in db.query(sql, (inputs_hash, outputs_hash))]
+    else:
+        sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
+        variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
     return variants
 
 def submit(problem):
@@ -64,7 +73,7 @@ def submit(problem):
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
-    variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
+    variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash, use_output_index_only)
 
     new_inputs = []
     new_outputs = []
@@ -72,7 +81,7 @@ def submit(problem):
     guesses_used = 0
     comforming_variants = []
     for variant in variants:
-        print variant
+        print 'Variant:', variant
         comforming_variants.append(variant)
         if not is_program_conform_to_data(variant, new_inputs, new_outputs):
             print "skipping variant because it doesn't work on new data"
@@ -94,8 +103,9 @@ def submit(problem):
 
 
 if __name__ == '__main__':
-    if False:
+    if True:
         problem = api.train(6)
+        use_output_index_only=True
         submit(problem)
     else:
         inp = str(raw_input())
