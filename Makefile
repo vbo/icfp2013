@@ -20,4 +20,4 @@ $(EXE): $(LIB_SOURCES) $(INCLUDES) $(SOURCES)
 	$(GCC) -Wall -O0 $(LIB_SOURCES) $(EXE_SOURCE) -I$(INCLUDES_DIR) -o $@
 
 $(LIB): $(LIB_SOURCES) $(INCLUDES)
-	$(GCC) -Wall -O2 --shared $(LIB_SOURCES) -I$(INCLUDES_DIR) -o $(LIB)
+	$(GCC) -Wall -O2 --shared $(LIB_SOURCES) -I$(INCLUDES_DIR) -o $(LIB) -fPIC

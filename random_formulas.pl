@@ -9,48 +9,88 @@ my $level = shift @ARGV;
 my @mas_op = split(', ', shift @ARGV);
 
 my @mas_const = ('1' , '0' , 'id');
-#my @mas_op = ('not', 'shr1', 'or', 'plus', 'shr4', 'shr16', 'shl1', 'if0', 'fold');
+unless (@mas_op) {
+	@mas_op = ('xor', 'not', 'shr1', 'or', 'plus', 'shr4', 'shr16', 'shl1', 'if0', 'fold');
+}
 my $operators = {
 	'fold' => {
 		'exp' => '(fold Ex Ex ( lambda ( id1 id2 ) Ex ) )',
 		'flag' => 0,
+		'w' => 2,
 	},
 	'if0' => {
 		'exp' => '(if0 Ex Ex Ex)',
 		'flag' => 0,
+		'w' => 2,
 	},
 	'or' => {
 		'exp' => '(or Ex Ex)',
 		'flag' => 0,
+		'w' => 2,
 	},
 	'shr1' => { 
 		'exp' => '(shr1 Ex)',
 		'flag' => 0,
+		'w' => 1,
 	},
 	'shr4' => { 
 		'exp' => '(shr4 Ex)',
 		'flag' => 0,
+		'w' => 1,
 	},
 	'shr16' => { 
 		'exp' => '(shr16 Ex)',
 		'flag' => 0,
+		'w' => 1,
 	},
 	'shl1' => { 
 		'exp' => '(shl1 Ex)',
 		'flag' => 0,
+		'w' => 1,
 	},
 	'not' => {
 		'exp' => '(not Ex)',
 		'flag' => 0,
+		'w' => 1,
 	},
 	'plus' => {
 		'exp' => '(plus Ex Ex)',
 		'flag' => 0,
+		'w' => 2,
 	},
 	'xor' => {
 		'exp' => '(xor Ex Ex)',
 		'flag' => 0,
+		'w' => 2,
 	},
+};
+my $unar_operators = {
+	'shr1' => { 
+		'exp' => '(shr1 Ex)',
+		'flag' => 0,
+		'w' => 1,
+	},
+	'shr4' => { 
+		'exp' => '(shr4 Ex)',
+		'flag' => 0,
+		'w' => 1,
+	},
+	'shr16' => { 
+		'exp' => '(shr16 Ex)',
+		'flag' => 0,
+		'w' => 1,
+	},
+	'shl1' => { 
+		'exp' => '(shl1 Ex)',
+		'flag' => 0,
+		'w' => 1,
+	},
+	'not' => {
+		'exp' => '(not Ex)',
+		'flag' => 0,
+		'w' => 1,
+	},
+
 };
 my $const = {
 	'1' => {
@@ -80,6 +120,10 @@ for my $i (0..$level) {
 		$rand = $#mas_op;
 		$mas_op[$#mas_op] = 'fold';
 	}
+	my $count_ex_pre = 0;
+	while($result =~ /Ex/g) {
+		$count_ex_pre++;
+	}
 	if($operators->{$mas_op[$rand]}->{'flag'} == 1) {
 		my $flag = 0;
 		for my $oper (@mas_op) {
@@ -89,7 +133,18 @@ for my $i (0..$level) {
 		}
 		redo if $flag;
 	}
-	my $exp = $operators->{$mas_op[$rand]}->{'exp'};
+	my $exp;
+	if (($i == $level) and ($count + 2 + $count_ex_pre == $level)) {
+		if($operators->{$mas_op[$rand]}->{'w'} != 1) {
+			for (@mas_op) {
+				if (exists $unar_operators->{$_}) {
+					$exp = $unar_operators->{$_}->{'exp'};
+				}
+			}	
+		}
+	}else {
+		$exp = $operators->{$mas_op[$rand]}->{'exp'};
+	}
 	if ($result =~ /Ex/) {
 		$result =~ s/Ex/$exp/;
 	} else {
@@ -116,7 +171,7 @@ for my $i (0..$level) {
 	}
 }
 
-for my $i (0..$count_ex) {
+for my $i (1..$count_ex) {
 	my $rand = int(rand(@mas_const));
 	my $exp = $const->{$mas_const[$rand]}->{'exp'};
 	if ($exp eq 'id' and $result =~ /[^(Ex)]\(fold [\S]* [\S]* \( lambda \( id1 id2 \) Ex \) \)/) {

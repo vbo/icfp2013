@@ -120,7 +120,7 @@ if __name__ == '__main__':
     )
 
     for problem_conf in problems_without_dupes[offset:offset + limit]:
-        group_id = problem_conf['id']
+        group_id = problem_conf['group_id']
 
         final_problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
         problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.sql' % group_id)
@@ -148,14 +148,17 @@ if __name__ == '__main__':
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
                 start_time = time.time()
+                i = 0
                 for program_query in generate_sql_for_problem(problem_conf, index, inputs, inputs_hash, parallelize=args.parallelize, use_parser=not args.noparse):
-                    fp.write(program_query)
-                    if args.timeout:
-                        elapsed = time.time() - start_time
-                        if elapsed > args.timeout:
-                            print "Skipping problem because of timeout"
-                            need_to_delete_sql = True
-                            break
+                    i = i + 1
+                    if i > 221632:
+						fp.write(program_query)
+						if args.timeout:
+							elapsed = time.time() - start_time
+							if elapsed > args.timeout:
+								print "Skipping problem because of timeout"
+								need_to_delete_sql = True
+								break
         except BaseException as e:
             #if os.path.isfile(problem_sql_path):
                 #os.remove(problem_sql_path)
