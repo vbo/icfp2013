@@ -4,6 +4,7 @@ import tempfile
 import filecmp
 import sys
 import time
+import shutil
 
 from ..operators import get_templated_operators
 from . import build_formula_index
@@ -53,7 +54,7 @@ if __name__ == '__main__':
             help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
     parser.add_argument("--assert", action="store_true", dest="assert_only", default=False)
-    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.gettempdir())
+    parser.add_argument("--assert-dir", type=str, dest="assert_dir", default=tempfile.mkdtemp())
     parser.add_argument("--nocompress", action="store_true", dest="nocompress", default=False,
             help='Do not call gzip after outputting sql')
     parser.add_argument("--noparse", action="store_true", dest="noparse", default=False,
@@ -72,11 +73,14 @@ if __name__ == '__main__':
     else:
         ops_to_filter = None
 
+    if os.path.abspath(args.assert_dir) == os.path.abspath(args.outdir):
+        print "ASSERT DIR CANNOT BE SAME AS OUTDIR"
+        sys.exit(1)
+
     offset = args.offset
     limit = args.limit
     group_id = args.group_id
     #TODO: fill_db by group_id
-    assert_sql_path = None
     problems_getter = None
 
     if args.assert_only:
@@ -108,15 +112,16 @@ if __name__ == '__main__':
             (inputs_hash, inputs_readable)
         )
 
-        problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
+        final_problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
+        problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.sql' % group_id)
+
         if args.assert_only:
-            if not os.path.isfile(problem_sql_path):
-                print "Generate %s first to assert" % (problem_sql_path,)
+            if not os.path.isfile(final_problem_sql_path):
+                print "Generate %s first to assert" % (final_problem_sql_path,)
                 continue
-            assert_sql_path = problem_sql_path
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
-        if not args.force and (os.path.isfile(problem_sql_path) or os.path.isfile(problem_sql_path + '.gz')):
+        if not args.force and not args.assert_only (os.path.isfile(final_problem_sql_path) or os.path.isfile(final_problem_sql_path + '.gz')):
             print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
@@ -148,19 +153,33 @@ if __name__ == '__main__':
                 os.remove(problem_sql_path)
             continue
 
-        if not args.nocompress:
-            cmd = 'gzip -f "%s"' % problem_sql_path
-            print cmd
-            os.system(cmd)
-
         if args.assert_only:
-            diff = "diff %s %s" % (problem_sql_path, assert_sql_path)
+            diff = "diff %s %s" % (problem_sql_path, final_problem_sql_path)
             print "Performing", diff
             sys.stdout.flush()
-            cmp = filecmp.cmp(problem_sql_path, assert_sql_path)
+            cmp = filecmp.cmp(problem_sql_path, final_problem_sql_path)
             if not cmp:
                 os.system(diff)
                 print "Diff not empty:"
                 print diff
                 sys.exit(1)
             print "Empty diff: OK"
+            continue
+
+
+        if not args.nocompress:
+            cmd = 'gzip -f "%s"' % problem_sql_path
+            print cmd
+            if (os.system(cmd) != 0):
+                print "GZIP FAILED"
+                sys.exit(1)
+
+            if os.path.isfile(final_problem_sql_path):
+                print "Removing previous uncompressed version %s" % final_problem_sql_path
+                os.remove(final_problem_sql_path)
+
+            final_problem_sql_path += ".gz"
+            problem_sql_path += ".gz"
+
+        print "Move %s => %s" % (problem_sql_path, final_problem_sql_path)
+        shutil.move(problem_sql_path, final_problem_sql_path)
