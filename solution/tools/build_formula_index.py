@@ -1,4 +1,5 @@
 import itertools
+import copy
 import os
 
 from ..operators import Operators, get_templated_operators, get_formula_reducers
@@ -48,6 +49,11 @@ class TemplateRenderingState(object):
 
         self.is_if0_allowed = Operators.IF0 in self.allowed_ops
         self.is_fold_allowed = Operators.FOLD in self.allowed_ops
+
+    def clone(self, contain_fold_ids):
+        clone_of_self = copy.copy(self)
+        clone_of_self.contain_fold_ids = contain_fold_ids
+        return clone_of_self
 
 
 class TemplatedProgramTreeNode(object):
@@ -145,8 +151,9 @@ class TemplatedProgramTreeNode(object):
             for value in self.args[0]._render(state):
                 for value2 in self.args[1]._render(state):
 
-                    state.contain_fold_ids = True
-                    for value3 in self.args[2]._render(state):
+                    foldstate = state.clone(contain_fold_ids=True)
+
+                    for value3 in self.args[2]._render(foldstate):
                         f1 = (op, value['f'], value2['f'], value3['f'])
                         f2 = (op, value['operator'], value2['operator'], value3['operator'])
                         if f1 in self.reducers:
@@ -160,8 +167,6 @@ class TemplatedProgramTreeNode(object):
                                 'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
                                 'f': f1
                             }
-
-                    state.contain_fold_ids = False
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
