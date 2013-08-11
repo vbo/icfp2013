@@ -63,6 +63,8 @@ if __name__ == '__main__':
     parser.add_argument("--noparse", action="store_true", dest="noparse", default=False,
             help="Don't use parser - use solve_formula to evaluate programs")
     parser.add_argument("--timeout", type=int, default=0)
+    parser.add_argument("--dry-run", action='store_true', dest='dry_run',
+            help='Do not perform any computations - just print what will happen')
 
     args = parser.parse_args()
 
@@ -82,8 +84,6 @@ if __name__ == '__main__':
 
     offset = args.offset
     limit = args.limit
-    group_id = args.group_id
-    #TODO: fill_db by group_id
     problems_getter = None
 
     if args.assert_only:
@@ -95,7 +95,10 @@ if __name__ == '__main__':
     if ops_to_filter:
         problems_filter = lambda problem: not (set(get_templated_operators(problem['operators'])) - ops_to_filter)
     else:
-        problems_filter = None
+        problems_filter = lambda problem: True
+
+    if args.group_id:
+        problems_filter = lambda problem: problems_filter(problem) and problem.get('group_id', 0) >= args.group_id
 
     problems_without_dupes = filter(problems_filter, problems.get_problems_without_dupes(problems_getter))
 
@@ -130,6 +133,9 @@ if __name__ == '__main__':
             continue
 
         print 'Generating SQL for problem group %d, saving to "%s"' % (group_id, problem_sql_path)
+        if args.dry_run:
+            continue
+
         # Pick specialized index to reduce space for problems without certain elements (like fold)
         index = index_dispatcher.get_index(problem_conf['operators'])
 
