@@ -20,6 +20,12 @@ class FoldTestCase(unittest.TestCase):
             lambda x, y: x | y
         ), 3)
 
+    def test_common_case2(self):
+        self.assertEquals(e.fold(
+            Int64(0xFFCD00F123), Int64(1),
+            lambda x, y: x | y
+        ), 255)
+
 
     @attr('fast')
     def test_almost_overflow(self):

@@ -1,3 +1,5 @@
+from itertools import product
+
 class Operators(object):
 
     IF0 = 'if0'
@@ -37,6 +39,71 @@ class Operators(object):
 
     TFOLD = 'tfold'
 
+    ANY = '*'
+
+def one():
+    return { 'operator': Operators.ONE, 'ops': [], 'f': Operators.ONE }
+
+def zero():
+    return { 'operator': Operators.ZERO, 'ops': [], 'f': Operators.ZERO }
+
+formula_reducers = {
+    (Operators.NOT, (Operators.NOT, (Operators.ANY, ))): lambda args: args[0]['args'][0],
+
+    (Operators.SHL1, (Operators.ZERO, )): lambda args: zero(),
+    (Operators.SHR1, (Operators.ZERO, )): lambda args: zero(),
+    (Operators.SHR4, (Operators.ZERO, )): lambda args: zero(),
+    (Operators.SHR16, (Operators.ZERO, )): lambda args: zero(),
+    (Operators.SHR1, (Operators.ONE, )): lambda args: zero(),
+    (Operators.SHR4, (Operators.ONE, )): lambda args: zero(),
+    (Operators.SHR16, (Operators.ONE, )): lambda args: zero(),
+
+    (Operators.AND, (Operators.ZERO, Operators.ANY)): lambda args: zero(),
+    (Operators.AND, (Operators.ANY, Operators.ZERO)): lambda args: zero(),
+    (Operators.AND, (Operators.ONE, Operators.ONE)): lambda args: one(),
+
+    (Operators.PLUS, (Operators.ANY, Operators.ZERO)): lambda args: args[0],
+    (Operators.PLUS, (Operators.ZERO, Operators.ANY)): lambda args: args[1],
+
+    (Operators.XOR, (Operators.ZERO, Operators.ZERO)): lambda args: zero(),
+    (Operators.XOR, (Operators.ZERO, Operators.ONE)): lambda args: one(),
+    (Operators.XOR, (Operators.ONE, Operators.ZERO)): lambda args: one(),
+    (Operators.XOR, (Operators.ONE, Operators.ONE)): lambda args: zero(),
+
+
+    (Operators.SHR16, (Operators.SHL1, (Operators.ONE, ))): lambda args: zero(),
+    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.ANY, ))))): lambda args: zero(),
+    (Operators.OR, (Operators.ZERO, Operators.ANY)): lambda args: args[1],
+    (Operators.OR, (Operators.ANY, Operators.ZERO)): lambda args: args[0],
+    (Operators.IF0, (Operators.ZERO, Operators.ANY, Operators.ANY)): lambda args: args[1],
+    (Operators.IF0, (Operators.ONE, Operators.ANY, Operators.ANY)): lambda args: args[1],
+    (Operators.IF0, (Operators.ONE, (Operators.PLUS, (Operators.ANY)), Operators.ANY)): lambda args: args[1],
+    (Operators.IF0, (Operators.ANY, Operators.ONE, Operators.ONE)): lambda args: one(),
+    (Operators.IF0, (Operators.ANY, Operators.ZERO, Operators.ZERO)): lambda args: zero(),
+}
+
+def formula_reducers_permutation():
+    global formula_reducers
+    for formula_reducer, answer in formula_reducers.items():
+        for formula in formula_reducer_generator(formula_reducer):
+            yield formula, answer
+
+def formula_reducer_generator(formula_template):
+    variants = []
+    for arg in formula_template:
+        v = []
+        if type(arg) == tuple:
+            v = list(formula_reducer_generator(arg))
+        elif arg == Operators.ANY:
+            v = list(Operators.ALL_OPS | Operators.TERMINALS_FULL)
+        else:
+            v = [arg]
+        variants.append(v)
+    for variant in product(*variants):
+        yield variant
+
+def get_formula_reducers():
+    return dict(formula_reducers_permutation())
 
 def get_templated_operators(operators):
     '''
