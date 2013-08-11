@@ -52,6 +52,8 @@ class TemplateRenderingState(object):
 
 class TemplatedProgramTreeNode(object):
 
+    reducers = get_formula_reducers()
+
     def __init__(self, operator, args=None, size=None):
         self.operator = operator
         self.has_fold = operator == Operators.FOLD \
@@ -65,8 +67,6 @@ class TemplatedProgramTreeNode(object):
             self.args = None
 
         self.size = size
-
-        self.reducers = get_formula_reducers()
 
     def render(self, contain_fold_ids, allowed_ops=None):
         return self._render(TemplateRenderingState(contain_fold_ids, allowed_ops))
@@ -429,9 +429,12 @@ class TreeTemplatesIndex(object):
 class TreeIndexDispatcher(object):
     '''
     Distribution of problems grouped by allowed operators:
+        # DONE
         (1, ('if0',)),
         (3, ('fold', 'if0', 'op2')),
+        # DONE
         (5, ('op1',)),
+        # DONE
         (6, ('op2',)),
         (7, ('fold', 'if0', 'op1')),
         (9, ('if0', 'op1')),
