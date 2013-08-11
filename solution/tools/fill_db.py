@@ -120,7 +120,7 @@ if __name__ == '__main__':
     )
 
     for problem_conf in problems_without_dupes[offset:offset + limit]:
-        group_id = problem_conf['group_id']
+        group_id = problem_conf['id']
 
         final_problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
         problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.sql' % group_id)
@@ -132,10 +132,10 @@ if __name__ == '__main__':
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
         if not args.force and not args.assert_only and (os.path.isfile(final_problem_sql_path) or os.path.isfile(final_problem_sql_path + '.gz')):
-            print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
+            print 'Skipping generating SQL for problem group %s: file exists. Use --force to override.' % group_id
             continue
 
-        print 'Generating SQL for problem group %d, saving to "%s"' % (group_id, problem_sql_path)
+        print 'Generating SQL for problem group %s, saving to "%s"' % (group_id, problem_sql_path)
         if args.dry_run:
             continue
 
