@@ -188,9 +188,12 @@ def submit_in_sandbox(problem, poll_storage=True, cond=None):
         #print "expected", problem['challenge']
     except api.AlreadySolvedException as e:
         print 'was already solved'
+        if cond:
+            cond.notify()
     except api.RequestError as e:
         print 'Request error:', e
-
+    except api.TaskGoneError as e:
+        print "it's gone =("
     finally:
         if cond is not None:
             cond.release()
@@ -210,4 +213,7 @@ if __name__ == '__main__':
         try_train()
 
     else:
-        submit_many(args.size, args.id, args.interactive)
+        try:
+            submit_many(args.sizes, args.id, args.interactive, False)
+        except api.TaskGoneError:
+            print "gone =("
