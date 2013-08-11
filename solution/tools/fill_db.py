@@ -6,12 +6,12 @@ import sys
 import time
 import shutil
 
-from ..operators import get_templated_operators
-from . import build_formula_index
-from ..lang.int64 import generate_inputs
-from .. import solver
-from .. import problems
-from ..util import get_int64_array_hash
+from solution.operators import get_templated_operators
+from solution.tools import build_formula_index
+from solution.lang.int64 import generate_inputs
+from solution import fast_solver, solver
+from solution import problems
+from solution.util import get_int64_array_hash
 
 home_directory = os.environ['HOME']
 dropbox_directory = os.path.join(home_directory, 'Dropbox', 'Icfp2013', 'problems_index')
@@ -20,9 +20,9 @@ dropbox_directory = os.path.join(home_directory, 'Dropbox', 'Icfp2013', 'problem
 def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=False, use_parser=True):
     for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
         if use_parser:
-            outputs = list(solver.solve(formula["s"], inputs, parallelize=parallelize))
+            outputs = fast_solver.solve(formula["s"], inputs)
         else:
-            outputs = list(solver.solve_formula(formula["formula"], inputs, parallelize=parallelize))
+            outputs = solver.solve_formula(formula["formula"], inputs, parallelize=parallelize)
 
 
         db_outputs = get_int64_array_hash(outputs)
