@@ -37,8 +37,7 @@ def get_variants_count(variants):
 def load_inputs_from_index(size, operators):
     operators = "_".join(operators)
     if use_output_index_only:
-        inputs_hash = db.fetchone(
-            "SELECT inputs from program WHERE operators = '*'")
+        inputs_hash = 'cba118200cc674d696b08940b17a5301'
     else:
         inputs_hash = db.fetchone(
             "SELECT inputs from program WHERE size = %s and operators = %s",
@@ -73,7 +72,7 @@ def submit(problem):
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
-    variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash, use_output_index_only)
+    variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
 
     new_inputs = []
     new_outputs = []
@@ -104,9 +103,17 @@ def submit(problem):
 
 if __name__ == '__main__':
     if True:
-        problem = api.train(6)
-        use_output_index_only=True
-        submit(problem)
+        win = 0
+        lose = 0
+        while True:
+            try:
+                problem = api.train(15)
+                use_output_index_only = True
+                submit(problem)
+                win += 1
+            except NotSolvedError:
+                lose += 1
+            print "win: %d from %d. lose: %d" % (win, win + lose, lose)
     else:
         inp = str(raw_input())
         group_ids = map(int, inp.split(" "))
