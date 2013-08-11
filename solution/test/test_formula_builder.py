@@ -20,8 +20,8 @@ class FormulaBuilderTestCase(unittest.TestCase):
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(not \(plus id2 id3\)\)\)\)\)', 9, ['tfold', 'plus', 'not'], 11),
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(shl1 \(xor 1 id2\)\)\)\)\)', 9, ['shl1', 'tfold', 'xor'], 12),
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(if0 id2 id2 id2\)\)\)\)', 9, ['tfold', 'if0'], 13),
-  #      ('\(lambda \(id\) \(not 1\)\)', 5, ['not'], 14),
-    ]
+        ('\(lambda \(id\) \(not 1\)\)', 5, ['not'], 14),
+   ]
 
     formulas_op = [
         ('.*(shr16 0|shr1 0|shr4 0|shl1 0|xor 1 1|xor 0 0|xor 1 0|xor 0 1|or(1 1|0 0|0 1|00) ).*', 10, ['xor', 'shr1', 'shl1', 'shr16', 'shr4', 'or'], 1),
@@ -29,7 +29,8 @@ class FormulaBuilderTestCase(unittest.TestCase):
         ('.*\(plus \((0 0|id 0|0 id|0 1|1 0)\)\).*', 11, ['plus', 'or', 'shr4', 'if0'], 3),
         ('\(lambda \(id\) \(shr(16|4) \(shl1 1\)\)\)', 6, None, 4),
         ('\(lambda \(id\) \(not \(not 1\)\)\)', 4, None, 5),
-       # ('\(lambda \(id\) \(shr16 \(shr16 \(shr16 \(shr16 .*\)\)\)\)\)', 7, None, 6),
+        ('\(lambda \(id\) \(shr16 \(shr16 \(shr16 \(shr16 .*\)\)\)\)\)', 7, ['shr16', 'not'], 6),
+        ('.*sh(r4|r16|r1) (1|0).*', 9, ['shr16', 'shr4', 'shr1', 'shl1'], 7),
     ]
     @classmethod
     def setUpClass(cls):
@@ -52,8 +53,8 @@ class FormulaBuilderTestCase(unittest.TestCase):
        #    print formulas
 
         for f in formulas:
-            if (number == 6) and (expectation == 0):
-               print f['s']
+            #if (number == 7): #and (expectation == 0):
+            #   print f['s']
             if formula_regexp.match(f['s']):
                equals = 1
                break
