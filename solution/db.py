@@ -1,11 +1,10 @@
-import psycopg2
-
 db = None
 
 
 def query(sql, fill_data=tuple()):
     global db
     if not db:
+        import psycopg2
         db = psycopg2.connect("dbname=icfp2013_01 user=vbo")
     cur = db.cursor()
     #print cur.mogrify(sql, fill_data)

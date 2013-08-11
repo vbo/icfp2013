@@ -9,16 +9,20 @@ from operators import Operators
 id_table = {}
 _pool = None
 
+POOL_PROCESSCOUNT = 4
+POOL_CHUNKSIZE = 64
+
+
 def solve(st, args, parallelize=False):
     if parallelize:
 
         global _pool
         if _pool is None:
-            _pool = multiprocessing.Pool()
+            _pool = multiprocessing.Pool(POOL_PROCESSCOUNT)
 
         return _pool.imap(_solve_tuple,
                           ((st, arg) for arg in args),
-                          chunksize=50)
+                          chunksize=POOL_CHUNKSIZE)
     else:
         return map(_solve_tuple,
                    ((st, arg) for arg in args))
@@ -85,11 +89,11 @@ def solve_formula(formula, args, parallelize=False):
     if parallelize:
         global _pool
         if _pool is None:
-            _pool = multiprocessing.Pool()
+            _pool = multiprocessing.Pool(POOL_PROCESSCOUNT)
 
         return _pool.imap(_solve_formula_tuple,
                           ((formula, arg) for arg in args),
-                          chunksize=50)
+                          chunksize=POOL_CHUNKSIZE)
     else:
         return map(_solve_formula_tuple,
                    ((formula, arg) for arg in args))
@@ -109,7 +113,6 @@ def _solve_formula_tuple((formula, arg)):
 
 def _solve_formula(formula):
     operator = formula['operator']
-
     args = formula.get('args')
 
     if operator in Operators.UNARY or operator in Operators.BINARY:
@@ -128,11 +131,10 @@ def _solve_formula(formula):
             return _solve_formula(args[2])
 
     elif operator == Operators.FOLD:
-
         def fold_helper(id2, id3):
             id_table[Operators.ID2] = id2
             id_table[Operators.ID3] = id3
-            return _solve_formula(args[3])
+            return _solve_formula(args[2])
 
         return e.fold(
             _solve_formula(args[0]),

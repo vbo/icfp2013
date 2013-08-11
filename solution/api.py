@@ -37,7 +37,9 @@ def call(path, request):
         if response.status_code != 200:
             raise RequestError(response.status_code)
         return response.json()
-    except Exception as e:
+    except BaseException as e:
+        if isinstance(e, KeyboardInterrupt) or isinstance(e, AlreadySolvedException):
+            raise
         if not auto_retry:
             raise
         print "auto-retrying request call(%s, %s). Exception was %s" % (path, request, e)
