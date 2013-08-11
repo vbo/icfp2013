@@ -17,7 +17,7 @@ home_directory = os.environ['HOME']
 dropbox_directory = os.path.join(home_directory, 'Dropbox', 'Icfp2013', 'problems_index')
 
 
-def generate_sql_for_problem(problem, index, parallelize=False, use_parser=True):
+def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=False, use_parser=True):
     for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
         if use_parser:
             outputs = list(solver.solve(formula["s"], inputs, parallelize=parallelize))
@@ -101,19 +101,20 @@ if __name__ == '__main__':
 
     print 'Total number of problems after applying filter:', len(problems_without_dupes)
 
+    # We use GLOBALLY equal inputs to get inputs->outputs mapping for all problems which we can query GLOBALLY. i.e. if we don't know SIZE and OPERATORS (for bonus problems) we could just use our existing database to query only by INPUTS and OUTPUTS.
+    inputs = list(generate_inputs(args.ninputs, seed=42))
+    inputs_hash = get_int64_array_hash(inputs)
+    inputs_readable = '|'.join('%016x' % x for x in inputs)
+
+    inputs_query = (
+        "INSERT INTO inputs"
+        "(inputs_hash, inputs)"
+        "VALUES ('%s', '%s');\n" %
+        (inputs_hash, inputs_readable)
+    )
+
     for problem_conf in problems_without_dupes[offset:offset + limit]:
         group_id = problem_conf['group_id']
-
-        inputs = list(generate_inputs(args.ninputs, seed=group_id))
-        inputs_hash = get_int64_array_hash(inputs)
-        inputs_readable = '|'.join('%016x' % x for x in inputs)
-
-        inputs_query = (
-            "INSERT INTO inputs"
-            "(inputs_hash, inputs)"
-            "VALUES ('%s', '%s');\n" %
-            (inputs_hash, inputs_readable)
-        )
 
         final_problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
         problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.sql' % group_id)
@@ -138,7 +139,7 @@ if __name__ == '__main__':
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
                 start_time = time.time()
-                for program_query in generate_sql_for_problem(problem_conf, index, args.parallelize, use_parser=not args.noparse):
+                for program_query in generate_sql_for_problem(problem_conf, index, inputs, inputs_hash, parallelize=args.parallelize, use_parser=not args.noparse):
                     fp.write(program_query)
                     if args.timeout:
                         elapsed = time.time() - start_time
