@@ -153,6 +153,7 @@ if __name__ == '__main__':
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
                 start_time = time.time()
+
                 for program_query in generate_sql_for_problem(problem_conf, index, inputs, inputs_hash, use_parser=not args.noparse):
                     fp.write(program_query)
                     if args.timeout:
