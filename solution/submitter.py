@@ -67,14 +67,10 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     if use_output_index_only:
         sql = "SELECT DISTINCT code, id FROM program WHERE inputs=%s AND outputs=%s ORDER BY id"
         params = [inputs_hash, outputs_hash]
-        if all_variants:
-            sql += " OFFSET %s"
-            params.append(len(all_variants))
         variants = [row[0] for row in db.query(sql, tuple(params))]
     else:
         sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
         variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
-    all_variants.extend(variants)
     return variants
 
 
