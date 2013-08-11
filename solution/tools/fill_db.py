@@ -26,10 +26,12 @@ def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=Fa
 
 
         db_outputs = get_int64_array_hash(outputs)
-
-        operators = list(problem['operators'])
-        operators.sort()
-        operators = "_".join(operators)
+        if problem['operators'] is None:
+            operators = '*'
+        else:
+            operators = list(problem['operators'])
+            operators.sort()
+            operators = "_".join(operators)
         assert len(db_outputs)
 
         query = (

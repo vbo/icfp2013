@@ -46,9 +46,19 @@ def dump_to_json(problems, path='fixture/problems.jsons'):
 
 
 fixture_problems = [
-    {'operators': ['shr4'], 'group_id': -2, 'id': '8iACnU9ZszMfCA4IAoSu5Sdc', 'size': 3},
-    {'operators': ['plus', 'not'], 'group_id': -1, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 5},
-    {'operators': None, 'group_id': -10, 'id': 'fixture__8RSpib2HhbZulX2t5iPN7oud', 'size': 9},
+    {'operators': None, 'group_id': -3, 'size': 3},
+    {'operators': None, 'group_id': -4, 'size': 4},
+    {'operators': None, 'group_id': -5, 'size': 5},
+    {'operators': None, 'group_id': -6, 'size': 6},
+    {'operators': None, 'group_id': -7, 'size': 7},
+    {'operators': None, 'group_id': -8, 'size': 8},
+    {'operators': None, 'group_id': -9, 'size': 9},
+    {'operators': None, 'group_id': -10, 'size': 10},
+    {'operators': None, 'group_id': -11, 'size': 11},
+    {'operators': None, 'group_id': -12, 'size': 12},
+    {'operators': None, 'group_id': -13, 'size': 13},
+    {'operators': None, 'group_id': -14, 'size': 14},
+    {'operators': None, 'group_id': -15, 'size': 15},
 ]
 
 
