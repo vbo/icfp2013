@@ -2,7 +2,8 @@ import itertools
 from operator import itemgetter
 import pprint
 
-from .problems import original_problems, get_problems_without_dupes
+from .problems import original_problems, get_problems_without_dupes, estimate_simplicity, dump_to_json
+
 from .operators import get_templated_operators
 
 
@@ -35,7 +36,7 @@ def get_templated_operators_distribution(problems):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
-        min_size = sys.argv[1]
+        min_size = int(sys.argv[1])
     else:
         min_size = 0
 
@@ -53,3 +54,9 @@ if __name__ == '__main__':
 
     print 'Problems by templated operators:'
     pprint.pprint(get_templated_operators_distribution(problems))
+
+    print 'Problems sorted by "simplicity" (top 30):'
+    by_simplicity = sorted((estimate_simplicity(p), p) for p in original_problems)
+    pprint.pprint(by_simplicity[:30])
+
+    dump_to_json((p[1] for p in by_simplicity), './fixture/problems_by_simplicity.json')

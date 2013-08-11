@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import product, groupby
 
 class Operators(object):
 
@@ -128,13 +128,28 @@ def get_templated_operators(operators):
     templated_operators = set()
 
     for op in operators:
-        if op in Operators.UNARY:
-            templated_operators.add(Operators.OP1)
-        elif op in Operators.BINARY:
-            templated_operators.add(Operators.OP2)
-        elif op == 'tfold':
+        if op == Operators.TFOLD:
             continue
-        else:
-            templated_operators.add(op)
+
+        templated_operators.add(get_operator_type(op))
 
     return tuple(sorted(templated_operators))
+
+
+def get_operator_type(op):
+    if op in Operators.UNARY:
+        return Operators.OP1
+    elif op in Operators.BINARY:
+        return Operators.OP2
+    elif op in Operators.TERMINALS_FULL:
+        return Operators.TERMINAL
+    else:
+        return op
+
+
+def get_operators_distribution(operators):
+    grouped = groupby(sorted(map(get_operator_type, operators)), lambda op: op)
+
+    return dict(
+        (optype, len(list(group)))
+        for optype, group in grouped)
