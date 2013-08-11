@@ -17,6 +17,8 @@ while : ; do
 
     comm -23 $1 $2 2>/dev/null | head -n -1 | tee >> $2 $TARGET_FILE
 
+    cp $TARGET_FILE ~/Dropbox/Icfp2013/problems_index/
+
     sleep $4
 
 done
