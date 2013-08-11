@@ -3,6 +3,8 @@ import copy
 import os
 
 from ..operators import Operators, get_templated_operators, get_formula_reducers
+from .. import formula
+from ..formula import formula_to_string
 
 
 class TreeVar(int):
@@ -77,70 +79,106 @@ class TemplatedProgramTreeNode(object):
     def render(self, contain_fold_ids, allowed_ops=None):
         return self._render(TemplateRenderingState(contain_fold_ids, allowed_ops))
 
+    def _try_reduce(self, f):
+        if f in self.reducers:
+            return self.reducers[f](formula.get_args(f))
+
+        formula_template = tuple(map(formula.get_operator, f))
+        if formula_template in self.reducers:
+            return self.reducers[formula_template](formula.get_args(f))
+
+        return f
+
     def _render(self, state):
         if self.operator == Operators.TERMINAL:
-
-            for terminal in Operators.TERMINALS:
-                yield {'operator': terminal, 'ops': [], 'f': terminal }
-
             if state.contain_fold_ids:
-                yield {'operator': Operators.ID2, 'ops': [], 'f': Operators.ID2 }
-                yield {'operator': Operators.ID3, 'ops': [], 'f': Operators.ID3 }
+                for terminal in Operators.TERMINALS_FULL:
+                    yield terminal
+            else:
+                for terminal in Operators.TERMINALS:
+                    yield terminal
 
         elif self.operator == Operators.OP1:
             for value in self.args[0]._render(state):
                 for op in state.allowed_unary:
-                    f1 = (op, value['f'])
-                    f2 = (op, value['operator'])
-                    if f1 in self.reducers:
-                        yield self.reducers[f1]((value, ))
-                    elif f2 in self.reducers:
-                        yield self.reducers[f2]((value, ))
-                    else:
-                        yield {
-                            'operator': op,
-                            'args': (value,),
-                            'ops': value['ops'] + [op],
-                            'f': f1
-                        }
+                    f = (op, value)
+                    yield self._try_reduce(f)
 
         elif self.operator == Operators.OP2:
+
+            # Handle AND separately to drop combinations as early as possible
+            if Operators.AND in state.allowed_binary:
+                values1 = self.args[0]._render(state)
+                values2 = None
+
+                for value in values1:
+                    if value == Operators.ZERO:
+                        yield value
+                    else:
+                        if values2 is None:
+                            values2 = list(self.args[1]._render(state))
+                            if not values2:
+                                return
+
+                        for value2 in values2:
+                            yield self._try_reduce((Operators.AND, value, value2))
+
+                if (state.allowed_binary) == 1:
+                    return
+
+            values2 = None
+
             for value in self.args[0]._render(state):
-                for value2 in self.args[1]._render(state):
+                if values2 is None:
+                    values2 = list(self.args[1]._render(state))
+                    if not values2:
+                        return
+
+                for value2 in values2:
                     for op in state.allowed_binary:
-                        f1 = (op, value['f'], value2['f'])
-                        f2 = (op, value['operator'], value2['operator'])
-                        if f1 in self.reducers:
-                            yield self.reducers[f1]((value, value2))
-                        elif f2 in self.reducers:
-                            yield self.reducers[f2]((value, value2))
-                        else:
-                            yield {
-                                'operator': op,
-                                'args': (value, value2),
-                                'ops': value['ops'] + value2['ops'] + [op],
-                                'f': f1
-                            }
+
+                        if op == Operators.AND:
+                            continue
+
+                        f = (op, value, value2)
+                        yield self._try_reduce(f)
 
         elif self.operator == Operators.IF0 and state.is_if0_allowed:
             op = Operators.IF0
 
+            values2 = values3 = None
+
             for value in self.args[0]._render(state):
-                for value2 in self.args[1]._render(state):
-                    for value3 in self.args[2]._render(state):
-                        f1 = (op, value['f'], value2['f'], value3['f'])
-                        f2 = (op, value['operator'], value2['operator'], value3['operator'])
-                        if f1 in self.reducers:
-                            yield self.reducers[f1]((value, value2, value3))
-                        elif f2 in self.reducers:
-                            yield self.reducers[f2]((value, value2, value3))
-                        else:
-                            yield {
-                                'operator': op,
-                                'args': (value, value2, value3),
-                                'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
-                                'f': f1
-                            }
+                if value == Operators.ZERO:
+                    if values2 is None:
+                        values2 = list(self.args[1]._render(state))
+                        if not values2:
+                            return
+                    for value2 in values2:
+                        yield (op, value, value2, Operators.ZERO)
+
+                elif value == Operators.ONE:
+                    if values3 is None:
+                        values3 = list(self.args[2]._render(state))
+                        if not values3:
+                            return
+                    for value3 in values3:
+                        yield (op, value, Operators.ZERO, value3)
+
+                else:
+                    if values2 is None:
+                        values2 = list(self.args[1]._render(state))
+                        if not values2:
+                            return
+
+                    for value2 in values2:
+                        if values3 is None:
+                            values3 = list(self.args[2]._render(state))
+                            if not values3:
+                                return
+                        for value3 in values3:
+                            f = (op, value, value2, value3)
+                            yield self._try_reduce(f)
 
         elif self.operator == Operators.FOLD and state.is_fold_allowed:
             if state.contain_fold_ids:
@@ -148,25 +186,27 @@ class TemplatedProgramTreeNode(object):
 
             op = Operators.FOLD
 
+            values2 = values3 = None
+
             for value in self.args[0]._render(state):
-                for value2 in self.args[1]._render(state):
+                if values2 is None:
+                    values2 = list(self.args[1]._render(state))
+                    if not values2:
+                        return
+
+                for value2 in values2:
 
                     foldstate = state.clone(contain_fold_ids=True)
 
+                    if values3 is None:
+                        values3 = list(self.args[2]._render(state))
+                        if not values3:
+                            return
+
                     for value3 in self.args[2]._render(foldstate):
-                        f1 = (op, value['f'], value2['f'], value3['f'])
-                        f2 = (op, value['operator'], value2['operator'], value3['operator'])
-                        if f1 in self.reducers:
-                            yield self.reducers[f1]((value, value2, value3))
-                        elif f2 in self.reducers:
-                            yield self.reducers[f2]((value, value2, value3))
-                        else:
-                            yield {
-                                'operator': op,
-                                'args': (value, value2, value3),
-                                'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
-                                'f': f1
-                            }
+
+                        f = (op, value, value2, value3)
+                        yield self._try_reduce(f)
 
     def __repr__(self):
         if self.operator != Operators.TERMINAL:
@@ -401,45 +441,17 @@ class TreeTemplatesIndex(object):
 
         for template in templates:
             for formula in template.render(contain_fold_ids=is_tfold, allowed_ops=allowed_ops):
-                ops = set(formula['ops'])
-
-                if allowed_ops is not None:
-                    if is_tfold:
-                        ops.add(Operators.TFOLD)
-
-                    # Do not yeld formula if it doesn't have ALL required operators
-                    #if ops.symmetric_difference(allowed_ops):
-                        #continue
-
-                formula['ops'] = list(ops)
 
                 if is_tfold:
-                    formula_str = '(lambda (%s) (fold %s 0 (lambda (%s %s) %s)))' % (
-                        Operators.ID, Operators.ID, Operators.ID2, Operators.ID3, formula_to_string(formula))
+                    formula = (Operators.FOLD, Operators.ID, Operators.ZERO, formula)
 
-                    formula = {
-                        'operator': Operators.FOLD,
-                        'ops': ops,
-                        'args': (
-                            {
-                                'operator': Operators.ID,
-                            },
-                            {
-                                'operator': Operators.ZERO,
-                            },
-                            formula,
-                        ),
+                if formula not in formulas_set:
+                    formulas_set.add(formula)
+
+                    yield {
+                        's': '(lambda (%s) %s)' % (Operators.ID, formula_to_string(formula)),
+                        'formula': formula,
                     }
-                else:
-                    formula_str = '(lambda (%s) %s)' % (Operators.ID, formula_to_string(formula))
-
-                formula['s'] = formula_str
-                formula['size'] = size
-                #formula['template'] = template
-
-                if formula_str not in formulas_set:
-                    formulas_set.add(formula_str)
-                    yield formula
 
 
 class TreeIndexDispatcher(object):
@@ -488,38 +500,3 @@ class TreeIndexDispatcher(object):
         return self.default_index \
             if allowed_ops is None \
             else self.indexes.get(get_templated_operators(allowed_ops), self.default_index)
-
-
-def formula_to_string(formula):
-    '''
-    :param formula:
-        formula is a representation of \BV program with following attributes:
-            "operator" - one of `Operators` fields, representing operator tag.
-            "args" - tuple with subexpressions of the same form. Empty for terminals.
-    :return:
-        \BV program source code.
-    '''
-    op = formula['operator']
-    args = formula.get('args')
-
-    if op in Operators.UNARY:
-        return '(%s %s)' % (op, formula_to_string(args[0]))
-    elif op in Operators.BINARY:
-        return '(%s %s %s)' % (op, formula_to_string(args[0]), formula_to_string(args[1]))
-    elif op == Operators.IF0:
-        return '(if0 %s %s %s)' % (
-            formula_to_string(args[0]),
-            formula_to_string(args[1]),
-            formula_to_string(args[2]),
-        )
-    elif op == Operators.FOLD:
-        return '(fold %s %s (lambda (%s %s) %s))' % (
-            formula_to_string(args[0]),
-            formula_to_string(args[1]),
-            Operators.ID2,
-            Operators.ID3,
-            formula_to_string(args[2]),
-        )
-    else:
-        # Assuming it is terminal
-        return op

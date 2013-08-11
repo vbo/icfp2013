@@ -41,53 +41,48 @@ class Operators(object):
 
     ANY = '*'
 
-def one():
-    return { 'operator': Operators.ONE, 'ops': [], 'f': Operators.ONE }
-
-def zero():
-    return { 'operator': Operators.ZERO, 'ops': [], 'f': Operators.ZERO }
 
 formula_reducers = {
-    (Operators.NOT, (Operators.NOT, Operators.ANY)): lambda args: args[0]['args'][0],
+    (Operators.NOT, (Operators.NOT, Operators.ANY)): lambda args: args[0][1],
 
-    (Operators.SHL1, Operators.ZERO): lambda args: zero(),
-    (Operators.SHR1, Operators.ZERO): lambda args: zero(),
-    (Operators.SHR4, Operators.ZERO): lambda args: zero(),
-    (Operators.SHR16, Operators.ZERO): lambda args: zero(),
-    (Operators.SHR1, Operators.ONE): lambda args: zero(),
-    (Operators.SHR4, Operators.ONE): lambda args: zero(),
-    (Operators.SHR16, Operators.ONE): lambda args: zero(),
+    (Operators.SHL1, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.SHR1, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.SHR4, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.SHR16, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.SHR1, Operators.ONE): lambda args: Operators.ZERO,
+    (Operators.SHR4, Operators.ONE): lambda args: Operators.ZERO,
+    (Operators.SHR16, Operators.ONE): lambda args: Operators.ZERO,
 
-    (Operators.AND, Operators.ZERO, Operators.ANY): lambda args: zero(),
-    (Operators.AND, Operators.ANY, Operators.ZERO): lambda args: zero(),
-    (Operators.AND, Operators.ONE, (Operators.NOT, Operators.ONE)): lambda args: zero(),
-    (Operators.AND, Operators.ONE, Operators.ONE): lambda args: one(),
+    (Operators.AND, Operators.ZERO, Operators.ANY): lambda args: Operators.ZERO,
+    (Operators.AND, Operators.ANY, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.AND, Operators.ONE, (Operators.NOT, Operators.ONE)): lambda args: Operators.ZERO,
+    (Operators.AND, Operators.ONE, Operators.ONE): lambda args: Operators.ONE,
 
     (Operators.PLUS, Operators.ANY, Operators.ZERO): lambda args: args[0],
     (Operators.PLUS, Operators.ZERO, Operators.ANY): lambda args: args[1],
 
-    (Operators.XOR, Operators.ZERO, Operators.ZERO): lambda args: zero(),
-    (Operators.XOR, Operators.ZERO, Operators.ONE): lambda args: one(),
-    (Operators.XOR, Operators.ONE, Operators.ZERO): lambda args: one(),
-    (Operators.XOR, Operators.ONE, Operators.ONE): lambda args: zero(),
+    (Operators.XOR, Operators.ZERO, Operators.ZERO): lambda args: Operators.ZERO,
+    (Operators.XOR, Operators.ZERO, Operators.ONE): lambda args: Operators.ONE,
+    (Operators.XOR, Operators.ONE, Operators.ZERO): lambda args: Operators.ONE,
+    (Operators.XOR, Operators.ONE, Operators.ONE): lambda args: Operators.ZERO,
 
-    (Operators.SHR16, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
-    (Operators.SHR1, (Operators.SHL1, Operators.ONE)): lambda args: one(),
-    (Operators.SHL1, (Operators.SHR1, Operators.ONE)): lambda args: zero(),
-    (Operators.SHR4, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
-    (Operators.SHR16, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
-    (Operators.SHR1, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
-    (Operators.SHL1, (Operators.SHR1, Operators.ZERO)): lambda args: zero(),
-    (Operators.SHR4, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
-  #  (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, Operators.ANY)))): lambda args: zero(),
-    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.ANY, Operators.ANY))))): lambda args: zero(),
+    (Operators.SHR16, (Operators.SHL1, Operators.ONE)): lambda args: Operators.ZERO,
+    (Operators.SHR1, (Operators.SHL1, Operators.ONE)): lambda args: Operators.ONE,
+    (Operators.SHL1, (Operators.SHR1, Operators.ONE)): lambda args: Operators.ZERO,
+    (Operators.SHR4, (Operators.SHL1, Operators.ONE)): lambda args: Operators.ZERO,
+    (Operators.SHR16, (Operators.SHL1, Operators.ZERO)): lambda args: Operators.ZERO,
+    (Operators.SHR1, (Operators.SHL1, Operators.ZERO)): lambda args: Operators.ZERO,
+    (Operators.SHL1, (Operators.SHR1, Operators.ZERO)): lambda args: Operators.ZERO,
+    (Operators.SHR4, (Operators.SHL1, Operators.ZERO)): lambda args: Operators.ZERO,
+  #  (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, Operators.ANY)))): lambda args: Operators.ZERO,
+    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.ANY, Operators.ANY))))): lambda args: Operators.ZERO,
     (Operators.OR, Operators.ZERO, Operators.ANY): lambda args: args[1],
     (Operators.OR, Operators.ANY, Operators.ZERO): lambda args: args[0],
-    (Operators.OR, Operators.ONE, Operators.ONE): lambda args: one(),
+    (Operators.OR, Operators.ONE, Operators.ONE): lambda args: Operators.ONE,
     (Operators.IF0, Operators.ZERO, Operators.ANY, Operators.ANY): lambda args: args[1],
     (Operators.IF0, Operators.ONE, Operators.ANY, Operators.ANY): lambda args: args[2],
-    (Operators.IF0, Operators.ANY, Operators.ONE, Operators.ONE): lambda args: one(),
-    (Operators.IF0, Operators.ANY, Operators.ZERO, Operators.ZERO): lambda args: zero(),
+    (Operators.IF0, Operators.ANY, Operators.ONE, Operators.ONE): lambda args: Operators.ONE,
+    (Operators.IF0, Operators.ANY, Operators.ZERO, Operators.ZERO): lambda args: Operators.ZERO,
 }
 
 def formula_reducers_permutation():

@@ -3,7 +3,8 @@ import multiprocessing
 from . import _sexpr
 from ._sexpr import Atom, symbol as Symbol
 from .lang import Int64, op, e
-from operators import Operators
+from .operators import Operators
+from . import formula as formula_helpers
 
 
 id_table = {}
@@ -108,12 +109,14 @@ def solve_formula_for_one(formula, arg):
 def _solve_formula_tuple((formula, arg)):
     id_table.clear()
     id_table[Operators.ID] = arg
+    if isinstance(formula, dict):
+        formula = formula['formula']
     return _solve_formula(formula)
 
 
 def _solve_formula(formula):
-    operator = formula['operator']
-    args = formula.get('args')
+    operator = formula_helpers.get_operator(formula)
+    args = formula_helpers.get_args(formula)
 
     if operator in Operators.UNARY or operator in Operators.BINARY:
 
