@@ -41,7 +41,7 @@ class SubmitterTestCase(unittest.TestCase):
         #problem = {u'challenge': u'(lambda (x_3437) (fold x_3437 0 (lambda (x_3437 x_3438) (plus (not 0) x_3437))))', u'operators': [u'not', u'plus', u'tfold'], u'id': u'HiEjgHecmuh14zXl0JzaUkB3', u'size': 9}
         problem = None
         if not problem:
-            for i in range(5):
+            for i in range(100):
                 print '------------', i
                 problem = api.train(9)
                 print 'We will solve this: ', problem['challenge']

@@ -84,8 +84,8 @@ class TemplatedProgramTreeNode(object):
         elif self.operator == Operators.OP1:
             for value in self.args[0]._render(state):
                 for op in state.allowed_unary:
-                    f1 = (op, (value['f'], ))
-                    f2 = (op, (value['operator'], ))
+                    f1 = (op, value['f'])
+                    f2 = (op, value['operator'])
                     if f1 in self.reducers:
                         yield self.reducers[f1]((value, ))
                     elif f2 in self.reducers:
@@ -102,8 +102,8 @@ class TemplatedProgramTreeNode(object):
             for value in self.args[0]._render(state):
                 for value2 in self.args[1]._render(state):
                     for op in state.allowed_binary:
-                        f1 = (op, (value['f'], value2['f']))
-                        f2 = (op, (value['operator'], value2['operator']))
+                        f1 = (op, value['f'], value2['f'])
+                        f2 = (op, value['operator'], value2['operator'])
                         if f1 in self.reducers:
                             yield self.reducers[f1]((value, value2))
                         elif f2 in self.reducers:
@@ -122,8 +122,8 @@ class TemplatedProgramTreeNode(object):
             for value in self.args[0]._render(state):
                 for value2 in self.args[1]._render(state):
                     for value3 in self.args[2]._render(state):
-                        f1 = (op, (value['f'], value2['f'], value3['f']))
-                        f2 = (op, (value['operator'], value2['operator'], value3['operator']))
+                        f1 = (op, value['f'], value2['f'], value3['f'])
+                        f2 = (op, value['operator'], value2['operator'], value3['operator'])
                         if f1 in self.reducers:
                             yield self.reducers[f1]((value, value2, value3))
                         elif f2 in self.reducers:
@@ -147,8 +147,8 @@ class TemplatedProgramTreeNode(object):
 
                     state.contain_fold_ids = True
                     for value3 in self.args[2]._render(state):
-                        f1 = (op, (value['f'], value2['f'], value3['f']))
-                        f2 = (op, (value['operator'], value2['operator'], value3['operator']))
+                        f1 = (op, value['f'], value2['f'], value3['f'])
+                        f2 = (op, value['operator'], value2['operator'], value3['operator'])
                         if f1 in self.reducers:
                             yield self.reducers[f1]((value, value2, value3))
                         elif f2 in self.reducers:
