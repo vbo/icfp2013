@@ -7,7 +7,7 @@ from . import util
 from .problems import original_problems
 
 
-api.request_delay = 3
+api.request_delay = 1
 
 class NotSolvedError(BaseException):
     def __init__(self, message, inputs, outputs, variants):
@@ -51,7 +51,7 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     operators = "_".join(operators)
     sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
     variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
-    return variants, len(variants)
+    return variants
 
 def submit(problem):
     operators = list(problem["operators"])
@@ -94,22 +94,25 @@ def submit(problem):
 
 
 if __name__ == '__main__':
-    if True:
+    if False:
         problem = api.train(6)
         submit(problem)
     else:
-        group_id = int(raw_input())
-        for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
-            try:
-                submit(problem)
-            except NotSolvedError as e:
-                print "not solved"
-                print e.outputs
-                print "variants", e.variants
-                #print "expected", problem['challenge']
-            except api.AlreadySolvedException as e:
-                print 'solved'
-                pass
-            print 'want another one?'
-            raw_input()
+        inp = str(raw_input())
+        group_ids = map(int, inp.split(" "))
+        for group_id in group_ids:
+            for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
+                try:
+                    print "Solving %s[group=%s]" % (problem['id'], group_id)
+                    submit(problem)
+                except NotSolvedError as e:
+                    print "not solved"
+                    print e.outputs
+                    print "variants", e.variants
+                    #print "expected", problem['challenge']
+                except api.AlreadySolvedException as e:
+                    print 'solved'
+                    pass
+                print 'want another one?'
+                raw_input()
 

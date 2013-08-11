@@ -13,6 +13,9 @@ from .. import solver
 from .. import problems
 from ..util import get_int64_array_hash
 
+home_directory = os.environ['HOME']
+dropbox_directory = os.path.join(home_directory, 'Dropbox', 'icfp2013')
+
 
 def generate_sql_for_problem(problem, index, parallelize=False, use_parser=True):
     for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
@@ -43,7 +46,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--index", type=str, dest='index_basedir', default='./tree_index')
-    parser.add_argument("--outdir", type=str, default='./sql/problems')
+    parser.add_argument("--outdir", type=str, default=dropbox_directory)
     parser.add_argument("--ops", type=str, dest='commaseparated_ops', default='')
     parser.add_argument("--ninputs", type=int, dest='ninputs', default=256)
     parser.add_argument("--offset", type=int, dest='offset', default=0)
@@ -121,7 +124,7 @@ if __name__ == '__main__':
                 continue
             problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.assert.sql' % group_id)
 
-        if not args.force and not args.assert_only (os.path.isfile(final_problem_sql_path) or os.path.isfile(final_problem_sql_path + '.gz')):
+        if not args.force and not args.assert_only and (os.path.isfile(final_problem_sql_path) or os.path.isfile(final_problem_sql_path + '.gz')):
             print 'Skipping generating SQL for problem group %d: file exists. Use --force to override.' % group_id
             continue
 
