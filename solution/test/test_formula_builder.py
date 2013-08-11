@@ -16,8 +16,10 @@ class FormulaBuilderTestCase(unittest.TestCase):
         ('\(lambda \(id\) \(fold', 7, None, 6),
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id\d id\d\) \(not \(not id\)\)\)\)\)', 8, ['tfold', 'not'], 7),
         ('\(lambda \(id\) \(fold', 9, ['tfold', 'if0'], 8),
-        ('\(lambda \(id\) \(xor id \(or 0 \(shr4 \(shr16 id\)\)\)\)\)', 8, ['xor', 'or', 'shr4', 'shr16'], 9),
+        ('\(lambda \(id\) \(xor id \(shr4 \(shr16 id\)\)\)\)', 8, ['xor', 'or', 'shr4', 'shr16'], 9),
         ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(not \(plus id2 id3\)\)\)\)\)', 9, ['tfold', 'plus', 'not'], 11),
+        ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(shl1 \(xor 1 id2\)\)\)\)\)', 9, ['shl1', 'tfold', 'xor'], 12),
+        ('\(lambda \(id\) \(fold id 0 \(lambda \(id2 id3\) \(if0 id2 id2 id2\)\)\)\)', 9, ['tfold', 'if0'], 13),
     ]
 
     @classmethod
@@ -37,10 +39,12 @@ class FormulaBuilderTestCase(unittest.TestCase):
         formulas = self._get_cached_formulas(size, operators)
         formula_regexp = re.compile(formula_regexp_text)
         equals = 0
+       # if (number == 3):
+       #    print formulas
 
         for f in formulas:
-        #    if (number == 11):
-        #       print f['s']
+          #  if (number == 9):
+          #     print f['s']
             if formula_regexp.match(f['s']):
                equals = 1
                break
