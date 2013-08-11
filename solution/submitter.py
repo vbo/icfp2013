@@ -13,7 +13,6 @@ from .problems import original_problems
 MAX_ALLOWED_SECONDS_PER_TASK = 310
 api.request_delay = 1
 use_output_index_only = True
-poll_storage = False
 poll_delay = 5
 non_comforming_variants = []
 all_variants = []
@@ -43,7 +42,7 @@ def is_program_conform_to_data(program_text, inputs, outputs):
 def get_variants_count(variants):
     return len(variants)
 
-def load_inputs_from_index(size, operators):
+def load_inputs_from_index(size, operators, use_output_index_only=True):
     operators = "_".join(operators)
     if use_output_index_only:
         inputs_hash = 'cba118200cc674d696b08940b17a5301'
@@ -76,7 +75,11 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     return variants
 
 
-def submit(problem):
+def submit(problem, poll_storage=True, cond=None):
+
+    if cond is not None:
+        cond.acquire()
+
     operators = list(problem["operators"])
     operators.sort()
     inputs, inputs_hash = load_inputs_from_index(problem["size"], operators)
@@ -84,7 +87,8 @@ def submit(problem):
     submit_time = time.time()
     result = api.eval(inputs, problem['id'])
     if result['status'] != 'ok':
-        raise Exception('Eval error: ' + result["message"])
+        cond.release()
+        print 'Eval error: ' + result["message"]
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
@@ -93,6 +97,7 @@ def submit(problem):
     new_inputs = []
     new_outputs = []
     comforming_variants = []
+    is_first_iteration = True
 
     while True:
         variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
@@ -105,6 +110,8 @@ def submit(problem):
             if res['status'] == 'win':
                 print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
                 print "answer is: ", variant
+                cond.notify_all()
+                cond.release()
                 return
             elif res['status'] == 'error':
                 print "error returned:", res.get('message')
@@ -113,6 +120,7 @@ def submit(problem):
                 new_input, new_output, _my_bad_output = map(lambda x: int(x, base=16), res['values'])
                 new_inputs.append(new_input)
                 new_outputs.append(new_output)
+
         if not poll_storage:
             raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), inputs, readable_outputs, comforming_variants)
 
@@ -121,6 +129,12 @@ def submit(problem):
             print 'We assume that task timed out. Giving up!'
             break
         else:
+            if cond is not None and is_first_iteration:
+                cond.notify_all()
+                cond.release()
+
+            is_first_iteration = False
+
             print "Not solvable after %s variants. Polling db for new knowledge" % (len(variants))
             time.sleep(poll_delay)
 
@@ -141,6 +155,38 @@ def try_train():
         print "win: %d from %d. lose: %d" % (win, win + lose, lose)
 
 
+def submit_many(sizes=None, id=None, interactive=False, poll_storage=True):
+    problems = None
+    sizes = None
+
+    if args.id:
+        problems = [p for p in original_problems if p['id'] == args.id]
+    elif args.interactive:
+        sizes = map(int, raw_input().split(" "))
+    else:
+        sizes = map(int, args.sizes.split(","))
+
+    if problems is None:
+        problems = [p for p in original_problems if p['size'] in sizes]
+
+    for problem in problems:
+        try:
+            print "Solving %s[size=%s]" % (problem['id'], problem['size'])
+            submit(problem, poll_storage=poll_storage)
+        except NotSolvedError as e:
+            print "not solved"
+            print e.outputs
+            print "variants", e.variants
+            #print "expected", problem['challenge']
+        except api.AlreadySolvedException as e:
+            print 'was already solved'
+            pass
+
+        if args.interactive:
+            print 'want another one?'
+            raw_input()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -155,35 +201,4 @@ if __name__ == '__main__':
         try_train()
 
     else:
-
-        problems = None
-        sizes = None
-
-        if args.id:
-            problems = [p for p in original_problems if p['id'] == args.id]
-        elif args.interactive:
-            sizes = map(int, raw_input().split(" "))
-        else:
-            sizes = map(int, args.sizes.split(","))
-
-        if problems is None:
-            problems = [p for p in original_problems if p['size'] in sizes]
-
-        poll_storage = True
-
-        for problem in problems:
-            try:
-                print "Solving %s[size=%s]" % (problem['id'], problem['size'])
-                submit(problem)
-            except NotSolvedError as e:
-                print "not solved"
-                print e.outputs
-                print "variants", e.variants
-                #print "expected", problem['challenge']
-            except api.AlreadySolvedException as e:
-                print 'was already solved'
-                pass
-
-            if args.interactive:
-                print 'want another one?'
-                raw_input()
+        submit_many(args.size, args.id, args.interactive)
