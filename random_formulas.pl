@@ -13,30 +13,43 @@ my @mas_const = ('1' , '0' , 'id');
 my $operators = {
 	'fold' => {
 		'exp' => '(fold Ex Ex ( lambda ( id1 id2 ) Ex ) )',
+		'flag' => 0,
 	},
 	'if0' => {
 		'exp' => '(if0 Ex Ex Ex)',
+		'flag' => 0,
 	},
 	'or' => {
 		'exp' => '(or Ex Ex)',
+		'flag' => 0,
 	},
 	'shr1' => { 
 		'exp' => '(shr1 Ex)',
+		'flag' => 0,
 	},
 	'shr4' => { 
 		'exp' => '(shr4 Ex)',
+		'flag' => 0,
 	},
 	'shr16' => { 
 		'exp' => '(shr16 Ex)',
+		'flag' => 0,
 	},
 	'shl1' => { 
 		'exp' => '(shl1 Ex)',
+		'flag' => 0,
 	},
 	'not' => {
 		'exp' => '(not Ex)',
+		'flag' => 0,
 	},
 	'plus' => {
 		'exp' => '(plus Ex Ex)',
+		'flag' => 0,
+	},
+	'xor' => {
+		'exp' => '(xor Ex Ex)',
+		'flag' => 0,
 	},
 };
 my $const = {
@@ -63,7 +76,15 @@ for my $i (0..$level) {
 		$rand = $#mas_op;
 		$mas_op[$#mas_op] = 'fold';
 	}
-	print "$rand\n";
+	if($operators->{$mas_op[$rand]}->{'flag'} == 1) {
+		my $flag = 0;
+		for my $oper (@mas_op) {
+			if ($operators->{$oper}->{'flag'} == 0) {
+				$flag = 1;
+			}
+		}
+		redo if $flag;
+	}
 	my $exp = $operators->{$mas_op[$rand]}->{'exp'};
 	if ($result =~ /Ex/) {
 		$result =~ s/Ex/$exp/;
@@ -72,9 +93,10 @@ for my $i (0..$level) {
 		$result =~ s/(.*)$/$1 $exp/;
 	}
 	if($mas_op[$rand]  eq 'fold') {
-		#splice(@mas_op, -1);
 		pop(@mas_op);
 		$count++;
+	} else {
+		$operators->{$mas_op[$rand]}->{'flag'} = 1;
 	}
 	$count++;
 	$count_ex = 0;
