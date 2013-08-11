@@ -107,11 +107,12 @@ if __name__ == '__main__':
         lose = 0
         while True:
             try:
-                problem = api.train(15)
+                problem = api.train(30)
                 submit(problem)
                 win += 1
-            except NotSolvedError:
+            except NotSolvedError as e:
                 lose += 1
+                print e
             print "win: %d from %d. lose: %d" % (win, win + lose, lose)
     else:
         inp = str(raw_input())
