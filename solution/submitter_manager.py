@@ -2,7 +2,7 @@ import argparse
 import itertools
 from multiprocessing import Process, Condition, active_children
 
-from solution.submitter import submit
+from solution import submitter
 from solution.problems import original_problems
 from solution import api
 
@@ -32,20 +32,19 @@ if __name__ == '__main__':
     cond = Condition()
 
     for problem in problems_to_solve:
-        slave = Process(target=submit, args=(problem, True, cond))
+        slave = Process(target=submitter.submit_in_sandbox, args=(problem, True, cond))
+        cond.acquire()
         slave.start()
-        # Give at least 3 seconds to solve a problem
-        slave.join(timeout=3)
+
+        print "MASTER: waiting for process to exhaust its variants."
+        cond.wait(300)
+        cond.release()
 
         if slave.is_alive():
-            print "MASTER: waiting for process to exhaust its variants."
-            cond.acquire()
-            cond.wait(300)
-            cond.release()
             print "MASTER: worker tried hard but no success so far. Letting him stay for a while."
 
     while active_children():
         children = active_children()
         print "PROCESSES LEFT:", children
         for c in children:
-            children.join(timeout=60)
+            c.join(timeout=60)
