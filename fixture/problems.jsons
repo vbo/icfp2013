@@ -1,4 +1,4 @@
-[{"id":"01NwdGY34iC0Sh4gIKbhrT1E","size":14,"operators":["if0","or","plus","shl1","shr1","shr16"]}
+{"id":"01NwdGY34iC0Sh4gIKbhrT1E","size":14,"operators":["if0","or","plus","shl1","shr1","shr16"]}
 {"id":"09BW36GMBkFCAdrI6eAGZs0M","size":21,"operators":["and","if0","not","or","plus","shr1","shr16","xor"]}
 {"id":"0AgCWAATJ62tc1UXkGABJs4S","size":21,"operators":["and","if0","not","or","plus","shl1","shr1","tfold"]}
 {"id":"0JIEbdVRUWAH0vLbaUFOBSNw","size":20,"operators":["fold","if0","not","or","shl1","shr1","xor"]}
