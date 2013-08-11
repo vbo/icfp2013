@@ -22,7 +22,7 @@ def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=Fa
         if use_parser:
             outputs = list(solver.solve(formula["s"], inputs, parallelize=parallelize))
         else:
-            outputs = list(solver.solve_formula(formula, inputs, parallelize=parallelize))
+            outputs = list(solver.solve_formula(formula["formula"], inputs, parallelize=parallelize))
 
 
         db_outputs = get_int64_array_hash(outputs)
@@ -36,7 +36,7 @@ def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=Fa
             "INSERT INTO program"
             "(size, operators, code, inputs, outputs)"
             "VALUES (%s, '%s', '%s', '%s', '%s');\n" %
-            (formula["size"], operators, formula["s"], inputs_hash, db_outputs)
+            (problem["size"], operators, formula["s"], inputs_hash, db_outputs)
         )
 
         yield query
