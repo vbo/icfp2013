@@ -31,7 +31,7 @@ def estimate_simplicity(problem):
 
     tfold_size_compensation = -4 if has_tfold else 0
 
-    return (op1count + 2*op2count + foldcost + if0cost)*(problem_size - tfold_size_compensation)
+    return (problem_size - tfold_size_compensation, op1count + 2*op2count + foldcost + if0cost)
 
 
 def load_from_json(path='fixture/problems.jsons'):
