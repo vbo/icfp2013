@@ -157,8 +157,8 @@ if __name__ == '__main__':
                             need_to_delete_sql = True
                             break
         except BaseException as e:
-            if os.path.isfile(problem_sql_path):
-                os.remove(problem_sql_path)
+            #if os.path.isfile(problem_sql_path):
+                #os.remove(problem_sql_path)
             raise
 
         if need_to_delete_sql:
