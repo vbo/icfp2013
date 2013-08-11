@@ -72,9 +72,12 @@ formula_reducers = {
     (Operators.XOR, Operators.ONE, Operators.ONE): lambda args: zero(),
 
     (Operators.SHR16, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
+    (Operators.SHR1, (Operators.SHL1, Operators.ONE)): lambda args: one(),
+    (Operators.SHR4, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
     (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, Operators.ANY, )))): lambda args: zero(),
     (Operators.OR, Operators.ZERO, Operators.ANY): lambda args: args[1],
     (Operators.OR, Operators.ANY, Operators.ZERO): lambda args: args[0],
+    (Operators.OR, Operators.ONE, Operators.ONE): lambda args: one(),
     (Operators.IF0, Operators.ZERO, Operators.ANY, Operators.ANY): lambda args: args[1],
     (Operators.IF0, Operators.ONE, Operators.ANY, Operators.ANY): lambda args: args[2],
     (Operators.IF0, Operators.ANY, Operators.ONE, Operators.ONE): lambda args: one(),
