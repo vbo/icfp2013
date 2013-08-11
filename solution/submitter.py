@@ -3,7 +3,6 @@ import time
 import argparse
 from itertools import izip
 
-from . import db
 from . import api
 from . import solver
 from . import util
@@ -43,6 +42,8 @@ def get_variants_count(variants):
     return len(variants)
 
 def load_inputs_from_index(size, operators, use_output_index_only=True):
+    from . import db
+
     operators = "_".join(operators)
     if use_output_index_only:
         inputs_hash = 'cba118200cc674d696b08940b17a5301'
@@ -60,6 +61,8 @@ def load_inputs_from_index(size, operators, use_output_index_only=True):
     return map(lambda x: '0x' + str(x), serialized.split('|')), inputs_hash
 
 def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
+    from . import db
+
     operators = "_".join(operators)
     if use_output_index_only:
         sql = "SELECT DISTINCT code, id FROM program WHERE inputs=%s AND outputs=%s ORDER BY id"
@@ -77,8 +80,6 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
 
 def submit(problem, poll_storage=True, cond=None):
 
-    if cond is not None:
-        cond.acquire()
 
     operators = list(problem["operators"])
     operators.sort()
@@ -87,8 +88,8 @@ def submit(problem, poll_storage=True, cond=None):
     submit_time = time.time()
     result = api.eval(inputs, problem['id'])
     if result['status'] != 'ok':
-        cond.release()
         print 'Eval error: ' + result["message"]
+        return
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
@@ -110,9 +111,6 @@ def submit(problem, poll_storage=True, cond=None):
             if res['status'] == 'win':
                 print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
                 print "answer is: ", variant
-                cond.notify_all()
-                cond.release()
-                return
             elif res['status'] == 'error':
                 print "error returned:", res.get('message')
             else:
@@ -130,7 +128,7 @@ def submit(problem, poll_storage=True, cond=None):
             break
         else:
             if cond is not None and is_first_iteration:
-                cond.notify_all()
+                cond.notify()
                 cond.release()
 
             is_first_iteration = False
@@ -170,21 +168,32 @@ def submit_many(sizes=None, id=None, interactive=False, poll_storage=True):
         problems = [p for p in original_problems if p['size'] in sizes]
 
     for problem in problems:
-        try:
-            print "Solving %s[size=%s]" % (problem['id'], problem['size'])
-            submit(problem, poll_storage=poll_storage)
-        except NotSolvedError as e:
-            print "not solved"
-            print e.outputs
-            print "variants", e.variants
-            #print "expected", problem['challenge']
-        except api.AlreadySolvedException as e:
-            print 'was already solved'
-            pass
+        submit_in_sandbox(problem, poll_storage=poll_storage)
 
-        if args.interactive:
-            print 'want another one?'
-            raw_input()
+    if args.interactive:
+        print 'want another one?'
+        raw_input()
+
+
+def submit_in_sandbox(problem, poll_storage=True, cond=None):
+    try:
+        if cond is not None:
+            cond.acquire()
+        print "Solving %s[size=%s]" % (problem['id'], problem['size'])
+        submit(problem, poll_storage=poll_storage, cond=cond)
+    except NotSolvedError as e:
+        print "not solved"
+        print e.outputs
+        print "variants", e.variants
+        #print "expected", problem['challenge']
+    except api.AlreadySolvedException as e:
+        print 'was already solved'
+    except api.RequestError as e:
+        print 'Request error:', e
+
+    finally:
+        if cond is not None:
+            cond.release()
 
 
 if __name__ == '__main__':
