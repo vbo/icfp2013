@@ -337,7 +337,7 @@ def expand_tree_templates(size, tree_indexes, allowed_ops=None):
 
 class TreeTemplatesIndex(object):
 
-    def __init__(self, basedir, maxsize_to_keep_in_memory=16, allowed_ops=None):
+    def __init__(self, basedir, maxsize_to_keep_in_memory=17, allowed_ops=None):
         self.basedir = basedir
 
         if not os.path.isdir(basedir):
@@ -490,7 +490,7 @@ class TreeIndexDispatcher(object):
         self.basedir = basedir
         self.maxsize_to_keep_in_memory = maxsize_to_keep_in_memory
 
-        self.default_index = TreeTemplatesIndex(self.basedir, self.maxsize_to_keep_in_memory - 5)
+        self.default_index = TreeTemplatesIndex(self.basedir, self.maxsize_to_keep_in_memory - 3)
 
         self.indexes = dict(
             (ops, TreeTemplatesIndex(self.basedir, self.maxsize_to_keep_in_memory, allowed_ops=ops))
