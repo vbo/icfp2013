@@ -24,11 +24,12 @@ class FormulaBuilderTestCase(unittest.TestCase):
     ]
 
     formulas_op = [
-        ('.*(shr16 0|shr1 0|shr4 0|shl1 0|xor 1 1|xor 0 0|xor 1 0|xor 0 1).*', 9, ['xor', 'shr1', 'shl1', 'shr16', 'shr4'], 1),
+        ('.*(shr16 0|shr1 0|shr4 0|shl1 0|xor 1 1|xor 0 0|xor 1 0|xor 0 1|or(1 1|0 0|0 1|00) ).*', 10, ['xor', 'shr1', 'shl1', 'shr16', 'shr4', 'or'], 1),
         ('.*\(plus \((0 0|id 0|0 id|0 1|1 0)\)\).*', 11, ['plus', 'or', 'shr4', 'if0'], 2),
         ('.*\(plus \((0 0|id 0|0 id|0 1|1 0)\)\).*', 11, ['plus', 'or', 'shr4', 'if0'], 3),
-        ('\(lambda \(id\) \(shr16 \(shl1 1\)\)\)', 6, None, 4),
+        ('\(lambda \(id\) \(shr(16|4) \(shl1 1\)\)\)', 6, None, 4),
         ('\(lambda \(id\) \(not \(not 1\)\)\)', 4, None, 5),
+       # ('\(lambda \(id\) \(shr16 \(shr16 \(shr16 \(shr16 .*\)\)\)\)\)', 7, None, 6),
     ]
     @classmethod
     def setUpClass(cls):
@@ -51,8 +52,8 @@ class FormulaBuilderTestCase(unittest.TestCase):
        #    print formulas
 
         for f in formulas:
-            #if (number == 4) and (expectation == 0):
-            #   print f['s']
+            if (number == 6) and (expectation == 0):
+               print f['s']
             if formula_regexp.match(f['s']):
                equals = 1
                break
