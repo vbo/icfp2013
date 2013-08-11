@@ -98,7 +98,8 @@ if __name__ == '__main__':
         problems_filter = lambda problem: True
 
     if args.group_id:
-        problems_filter = lambda problem: problems_filter(problem) and problem.get('group_id', 0) >= args.group_id
+        original_problems_filter = problems_filter
+        problems_filter = lambda problem: original_problems_filter(problem) and problem.get('group_id', 0) >= args.group_id
 
     problems_without_dupes = filter(problems_filter, problems.get_problems_without_dupes(problems_getter))
 
