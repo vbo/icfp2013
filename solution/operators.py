@@ -73,12 +73,14 @@ formula_reducers = {
 
     (Operators.SHR16, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
     (Operators.SHR1, (Operators.SHL1, Operators.ONE)): lambda args: one(),
+    (Operators.SHL1, (Operators.SHR1, Operators.ONE)): lambda args: zero(),
     (Operators.SHR4, (Operators.SHL1, Operators.ONE)): lambda args: zero(),
-    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, Operators.ANY )))): lambda args: zero(),
-#Stupid cases because they do not work ANY
-    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.NOT, Operators.ONE ))))): lambda args: zero(),
-    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.NOT, Operators.ZERO ))))): lambda args: zero(),
-####
+    (Operators.SHR16, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
+    (Operators.SHR1, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
+    (Operators.SHL1, (Operators.SHR1, Operators.ZERO)): lambda args: zero(),
+    (Operators.SHR4, (Operators.SHL1, Operators.ZERO)): lambda args: zero(),
+  #  (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, Operators.ANY)))): lambda args: zero(),
+    (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.SHR16, (Operators.ANY, Operators.ANY))))): lambda args: zero(),
     (Operators.OR, Operators.ZERO, Operators.ANY): lambda args: args[1],
     (Operators.OR, Operators.ANY, Operators.ZERO): lambda args: args[0],
     (Operators.OR, Operators.ONE, Operators.ONE): lambda args: one(),
@@ -104,6 +106,7 @@ def formula_reducer_generator(formula_template):
             v = [a[0] if type(a) == tuple and len(a) == 1 else a for a in list(formula_reducer_generator(arg))]
         elif arg == Operators.ANY:
             v = list(Operators.ALL_OPS | Operators.TERMINALS_FULL)
+            flag_tmp = 1
         else:
             v = [arg]
         variants.append(v)
