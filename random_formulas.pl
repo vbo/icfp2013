@@ -9,7 +9,7 @@ my $level = shift @ARGV;
 my @mas_op = split(', ', shift @ARGV);
 
 my @mas_const = ('1' , '0' , 'id');
-#my @mas_op = ('not' , 'shr1', 'or', 'plus', 'shr4', 'shr16', 'shl1', 'if0', 'fold');
+#my @mas_op = ('not', 'shr1', 'or', 'plus', 'shr4', 'shr16', 'shl1', 'if0', 'fold');
 my $operators = {
 	'fold' => {
 		'exp' => '(fold Ex Ex ( lambda ( id1 id2 ) Ex ) )',
@@ -59,10 +59,16 @@ my $count_ex = 0;
 my $result = '(lambda (id) ';
 for my $i (0..$level) {
 	my $rand = int(rand(@mas_op));
+	if($mas_op[$#mas_op] eq 'tfold') {
+		$rand = $#mas_op;
+		$mas_op[$#mas_op] = 'fold';
+	}
+	print "$rand\n";
 	my $exp = $operators->{$mas_op[$rand]}->{'exp'};
 	if ($result =~ /Ex/) {
 		$result =~ s/Ex/$exp/;
 	} else {
+		
 		$result =~ s/(.*)$/$1 $exp/;
 	}
 	if($mas_op[$rand]  eq 'fold') {
