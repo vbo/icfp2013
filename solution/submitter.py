@@ -8,7 +8,7 @@ from .problems import original_problems
 
 
 api.request_delay = 1
-use_output_index_only = False
+use_output_index_only = True
 
 class NotSolvedError(BaseException):
     def __init__(self, message, inputs, outputs, variants):
@@ -108,7 +108,6 @@ if __name__ == '__main__':
         while True:
             try:
                 problem = api.train(15)
-                use_output_index_only = True
                 submit(problem)
                 win += 1
             except NotSolvedError:
@@ -116,12 +115,12 @@ if __name__ == '__main__':
             print "win: %d from %d. lose: %d" % (win, win + lose, lose)
     else:
         inp = str(raw_input())
-        group_ids = map(int, inp.split(" "))
-        for group_id in group_ids:
-            print "filter for group=%s" % (group_id,)
-            for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
+        sizes = map(int, inp.split(" "))
+        for size in sizes:
+            print "filter for size=%s" % (size,)
+            for problem in filter(lambda x: x['size'] == size, original_problems):
                 try:
-                    print "Solving %s[group=%s]" % (problem['id'], group_id)
+                    print "Solving %s[size=%s]" % (problem['id'], size)
                     submit(problem)
                 except NotSolvedError as e:
                     print "not solved"
@@ -129,7 +128,7 @@ if __name__ == '__main__':
                     print "variants", e.variants
                     #print "expected", problem['challenge']
                 except api.AlreadySolvedException as e:
-                    print 'solved'
+                    print 'was already solved'
                     pass
                 print 'want another one?'
                 raw_input()
