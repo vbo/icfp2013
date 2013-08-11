@@ -13,8 +13,6 @@ MAX_ALLOWED_SECONDS_PER_TASK = 310
 api.request_delay = 1
 use_output_index_only = True
 poll_delay = 5
-non_comforming_variants = []
-all_variants = []
 
 class NotSolvedError(BaseException):
     def __init__(self, message, inputs, outputs, variants):
@@ -34,7 +32,6 @@ class IndexNotFoundError(Exception):
 def is_program_conform_to_data(program_text, inputs, outputs):
     for ideal_out, our_out in izip(outputs, solver.solve(program_text, inputs)):
         if ideal_out != our_out:
-            non_comforming_variants.append(program_text)
             return False
     return True
 
@@ -67,10 +64,10 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     if use_output_index_only:
         sql = "SELECT DISTINCT code, id FROM program WHERE inputs=%s AND outputs=%s ORDER BY id"
         params = [inputs_hash, outputs_hash]
-        variants = [row[0] for row in db.query(sql, tuple(params))]
+        variants = (row[0] for row in db.query(sql, tuple(params)))
     else:
         sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
-        variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
+        variants = (row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash)))
     return variants
 
 
@@ -95,17 +92,21 @@ def submit(problem, poll_storage=True, cond=None):
     new_outputs = []
     comforming_variants = []
     is_first_iteration = True
+    variants_tried = 0
 
     while True:
         variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
+
         for variant in variants:
+            variants_tried += 1
+
             if not is_program_conform_to_data(variant, new_inputs, new_outputs):
                 continue
             comforming_variants.append(variant)
             guesses_used += 1
             res = api.guess(problem['id'], variant)
             if res['status'] == 'win':
-                print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
+                print "solved from (at least) %d variants. %d guesses used. " % (variants_tried, guesses_used)
                 print "answer is: ", variant
             elif res['status'] == 'error':
                 print "error returned:", res.get('message')
@@ -129,7 +130,7 @@ def submit(problem, poll_storage=True, cond=None):
 
             is_first_iteration = False
 
-            print "Not solvable after %s variants. Polling db for new knowledge" % (len(variants))
+            print "Not solvable after %s variants. Polling db for new knowledge" % (variants_tried)
             time.sleep(poll_delay)
 
 
