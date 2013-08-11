@@ -1,6 +1,6 @@
 import argparse
 import itertools
-from multiprocessing import Process, Condition
+from multiprocessing import Process, Condition, active_children
 
 from solution.submitter import submit
 from solution.problems import original_problems
@@ -43,3 +43,9 @@ if __name__ == '__main__':
             cond.wait(300)
             cond.release()
             print "MASTER: worker tried hard but no success so far. Letting him stay for a while."
+
+    while active_children():
+        children = active_children()
+        print "PROCESSES LEFT:", children
+        for c in children:
+            children.join(timeout=60)
