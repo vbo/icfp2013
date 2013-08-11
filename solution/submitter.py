@@ -1,4 +1,6 @@
 import re
+import time
+import argparse
 from itertools import izip
 
 from . import db
@@ -6,9 +8,9 @@ from . import api
 from . import solver
 from . import util
 from .problems import original_problems
-from time import sleep
 
 
+MAX_ALLOWED_SECONDS_PER_TASK = 310
 api.request_delay = 1
 use_output_index_only = True
 poll_storage = False
@@ -73,11 +75,13 @@ def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     all_variants.extend(variants)
     return variants
 
+
 def submit(problem):
     operators = list(problem["operators"])
     operators.sort()
     inputs, inputs_hash = load_inputs_from_index(problem["size"], operators)
 
+    submit_time = time.time()
     result = api.eval(inputs, problem['id'])
     if result['status'] != 'ok':
         raise Exception('Eval error: ' + result["message"])
@@ -111,43 +115,75 @@ def submit(problem):
                 new_outputs.append(new_output)
         if not poll_storage:
             raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), inputs, readable_outputs, comforming_variants)
-        print "Not solvable after %s variants. Polling db for new knowledge" % (len(variants))
-        sleep(poll_delay)
+
+        time_since_start = time.time() - submit_time
+        if time_since_start > MAX_ALLOWED_SECONDS_PER_TASK:
+            print 'We assume that task timed out. Giving up!'
+            break
+        else:
+            print "Not solvable after %s variants. Polling db for new knowledge" % (len(variants))
+            time.sleep(poll_delay)
+
+
+def try_train():
+    win = 0
+    lose = 0
+    while True:
+        try:
+            problem = api.train(11)
+            problem = {u'challenge': u'(lambda (x_78425) (fold (shl1 x_78425) (not x_78425) (lambda (x_78426 x_78427) (if0 (shr4 (xor (shr16 x_78427) (plus (xor (xor (xor (shl1 (or (plus x_78426 (shr4 x_78427)) (shr16 x_78426))) x_78427) x_78427) x_78426) x_78427))) x_78426 x_78427))))', u'operators': [u'fold', u'if0', u'not', u'or', u'plus', u'shl1', u'shr16', u'shr4', u'xor'], u'id': u'FDDPUrzVIiCwpeM8k9iPcYHj', u'size': 30}
+            print "We will solve problem:", problem
+            submit(problem)
+            win += 1
+        except NotSolvedError as e:
+            lose += 1
+            print e
+        print "win: %d from %d. lose: %d" % (win, win + lose, lose)
 
 
 if __name__ == '__main__':
-    if False:
-        win = 0
-        lose = 0
-        while True:
-            try:
-                problem = api.train(11)
-                problem = {u'challenge': u'(lambda (x_78425) (fold (shl1 x_78425) (not x_78425) (lambda (x_78426 x_78427) (if0 (shr4 (xor (shr16 x_78427) (plus (xor (xor (xor (shl1 (or (plus x_78426 (shr4 x_78427)) (shr16 x_78426))) x_78427) x_78427) x_78426) x_78427))) x_78426 x_78427))))', u'operators': [u'fold', u'if0', u'not', u'or', u'plus', u'shl1', u'shr16', u'shr4', u'xor'], u'id': u'FDDPUrzVIiCwpeM8k9iPcYHj', u'size': 30}
-                print "We will solve problem:", problem
-                submit(problem)
-                win += 1
-            except NotSolvedError as e:
-                lose += 1
-                print e
-            print "win: %d from %d. lose: %d" % (win, win + lose, lose)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--prod", action='store_true')
+    parser.add_argument("-i", '--interactive', action='store_true')
+    parser.add_argument("--id", default=None, type=str)
+    parser.add_argument("--sizes", default=None, type=str)
+
+    args = parser.parse_args()
+
+    if not args.prod:
+        try_train()
+
     else:
-        inp = str(raw_input())
-        sizes = map(int, inp.split(" "))
+
+        problems = None
+        sizes = None
+
+        if args.id:
+            problems = [p for p in original_problems if p['id'] == args.id]
+        elif args.interactive:
+            sizes = map(int, raw_input().split(" "))
+        else:
+            sizes = map(int, args.sizes.split(","))
+
+        if problems is None:
+            problems = [p for p in original_problems if p['size'] in sizes]
+
         poll_storage = True
-        for size in sizes:
-            print "filter for size=%s" % (size,)
-            for problem in filter(lambda x: x['size'] == size, original_problems):
-                try:
-                    print "Solving %s[size=%s]" % (problem['id'], size)
-                    submit(problem)
-                except NotSolvedError as e:
-                    print "not solved"
-                    print e.outputs
-                    print "variants", e.variants
-                    #print "expected", problem['challenge']
-                except api.AlreadySolvedException as e:
-                    print 'was already solved'
-                    pass
+
+        for problem in problems:
+            try:
+                print "Solving %s[size=%s]" % (problem['id'], problem['size'])
+                submit(problem)
+            except NotSolvedError as e:
+                print "not solved"
+                print e.outputs
+                print "variants", e.variants
+                #print "expected", problem['challenge']
+            except api.AlreadySolvedException as e:
+                print 'was already solved'
+                pass
+
+            if args.interactive:
                 print 'want another one?'
                 raw_input()
-
