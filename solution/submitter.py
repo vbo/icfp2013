@@ -1,3 +1,4 @@
+import re
 from itertools import izip
 
 from . import db
@@ -5,10 +6,15 @@ from . import api
 from . import solver
 from . import util
 from .problems import original_problems
+from time import sleep
 
 
 api.request_delay = 1
 use_output_index_only = True
+poll_storage = False
+poll_delay = 5
+non_comforming_variants = []
+all_variants = []
 
 class NotSolvedError(BaseException):
     def __init__(self, message, inputs, outputs, variants):
@@ -28,6 +34,7 @@ class IndexNotFoundError(Exception):
 def is_program_conform_to_data(program_text, inputs, outputs):
     for ideal_out, our_out in izip(outputs, solver.solve(program_text, inputs)):
         if ideal_out != our_out:
+            non_comforming_variants.append(program_text)
             return False
     return True
 
@@ -54,11 +61,16 @@ def load_inputs_from_index(size, operators):
 def load_variants_from_index(size, operators, inputs_hash, outputs_hash):
     operators = "_".join(operators)
     if use_output_index_only:
-        sql = "SELECT distinct code FROM program WHERE inputs=%s AND outputs=%s"
-        variants = [row[0] for row in db.query(sql, (inputs_hash, outputs_hash))]
+        sql = "SELECT DISTINCT code, id FROM program WHERE inputs=%s AND outputs=%s ORDER BY id"
+        params = [inputs_hash, outputs_hash]
+        if all_variants:
+            sql += " OFFSET %s"
+            params.append(len(all_variants))
+        variants = [row[0] for row in db.query(sql, tuple(params))]
     else:
         sql = "SELECT distinct code FROM program WHERE size=%s AND operators=%s AND inputs=%s AND outputs=%s"
         variants = [row[0] for row in db.query(sql, (size, operators, inputs_hash, outputs_hash))]
+    all_variants.extend(variants)
     return variants
 
 def submit(problem):
@@ -72,42 +84,46 @@ def submit(problem):
 
     readable_outputs = result['outputs']
     outputs_hash = util.get_int64_array_hash(map(lambda x: long(int(x, base=16)), readable_outputs))
-    variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
-
-    new_inputs = []
-    new_outputs = []
 
     guesses_used = 0
+    new_inputs = []
+    new_outputs = []
     comforming_variants = []
-    for variant in variants:
-        print 'Variant:', variant
-        comforming_variants.append(variant)
-        if not is_program_conform_to_data(variant, new_inputs, new_outputs):
-            print "skipping variant because it doesn't work on new data"
-            continue
-        guesses_used += 1
-        res = api.guess(problem['id'], variant)
-        if res['status'] == 'win':
-            print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
-            print "answer is: ", variant
-            return
-        elif res['status'] == 'error':
-            print "error returned:", res.get('message')
-        else:
-            #mismatch
-            new_input, new_output, _my_bad_output = map(lambda x: int(x, base=16), res['values'])
-            new_inputs.append(new_input)
-            new_outputs.append(new_output)
-    raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), inputs, readable_outputs, comforming_variants)
+
+    while True:
+        variants = load_variants_from_index(problem['size'], operators, inputs_hash, outputs_hash)
+        for variant in variants:
+            if not is_program_conform_to_data(variant, new_inputs, new_outputs):
+                continue
+            comforming_variants.append(variant)
+            guesses_used += 1
+            res = api.guess(problem['id'], variant)
+            if res['status'] == 'win':
+                print "solved from %d variants. %d guesses used. " % (get_variants_count(variants), guesses_used)
+                print "answer is: ", variant
+                return
+            elif res['status'] == 'error':
+                print "error returned:", res.get('message')
+            else:
+                #mismatch
+                new_input, new_output, _my_bad_output = map(lambda x: int(x, base=16), res['values'])
+                new_inputs.append(new_input)
+                new_outputs.append(new_output)
+        if not poll_storage:
+            raise NotSolvedError("All variants failed! Guesses used: %d" % (guesses_used,), inputs, readable_outputs, comforming_variants)
+        print "Not solvable after %s variants. Polling db for new knowledge" % (len(variants))
+        sleep(poll_delay)
 
 
 if __name__ == '__main__':
-    if True:
+    if False:
         win = 0
         lose = 0
         while True:
             try:
-                problem = api.train(30)
+                problem = api.train(11)
+                problem = {u'challenge': u'(lambda (x_78425) (fold (shl1 x_78425) (not x_78425) (lambda (x_78426 x_78427) (if0 (shr4 (xor (shr16 x_78427) (plus (xor (xor (xor (shl1 (or (plus x_78426 (shr4 x_78427)) (shr16 x_78426))) x_78427) x_78427) x_78426) x_78427))) x_78426 x_78427))))', u'operators': [u'fold', u'if0', u'not', u'or', u'plus', u'shl1', u'shr16', u'shr4', u'xor'], u'id': u'FDDPUrzVIiCwpeM8k9iPcYHj', u'size': 30}
+                print "We will solve problem:", problem
                 submit(problem)
                 win += 1
             except NotSolvedError as e:
@@ -117,6 +133,7 @@ if __name__ == '__main__':
     else:
         inp = str(raw_input())
         sizes = map(int, inp.split(" "))
+        poll_storage = True
         for size in sizes:
             print "filter for size=%s" % (size,)
             for problem in filter(lambda x: x['size'] == size, original_problems):

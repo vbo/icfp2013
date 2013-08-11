@@ -22,6 +22,9 @@ class RequestError(BaseException):
 class AlreadySolvedException(BaseException):
     pass
 
+class TaskGoneError(BaseException):
+    pass
+
 
 def call(path, request):
     global last_api_request_time
@@ -43,11 +46,13 @@ def call(path, request):
 
         if response.status_code == 412:
             raise AlreadySolvedException()
+        if response.status_code == 410:
+            raise TaskGoneError()
         if response.status_code != 200:
             raise RequestError(response.status_code)
         return response.json()
     except BaseException as e:
-        if isinstance(e, KeyboardInterrupt) or isinstance(e, AlreadySolvedException):
+        if isinstance(e, KeyboardInterrupt) or isinstance(e, AlreadySolvedException) or isinstance(e, TaskGoneError):
             raise
         if not auto_retry:
             raise

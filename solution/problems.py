@@ -61,6 +61,8 @@ fixture_problems = [
     {'operators': None, 'group_id': -13, 'size': 13},
     {'operators': None, 'group_id': -14, 'size': 14},
     {'operators': None, 'group_id': -15, 'size': 15},
+    {'operators': None, 'group_id': -16, 'size': 16},
+    {'operators': None, 'group_id': -17, 'size': 17},
 ]
 
 original_problems = list(load_from_json())
