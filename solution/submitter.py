@@ -111,6 +111,7 @@ if __name__ == '__main__':
         inp = str(raw_input())
         group_ids = map(int, inp.split(" "))
         for group_id in group_ids:
+            print "filter for group=%s" % (group_id,)
             for problem in filter(lambda x: x['group_id'] == group_id, original_problems):
                 try:
                     print "Solving %s[group=%s]" % (problem['id'], group_id)
