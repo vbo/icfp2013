@@ -7,7 +7,8 @@ use Data::Dumper;
 
 my $level = shift @ARGV;
 my @mas_op = split(', ', shift @ARGV);
-
+my $num_variants = shift @ARGV;
+print $num_variants, "\n";
 my @mas_const = ('1' , '0' , 'id');
 unless (@mas_op) {
 	@mas_op = ('xor', 'not', 'shr1', 'or', 'plus', 'shr4', 'shr16', 'shl1', 'if0', 'fold');
@@ -107,81 +108,80 @@ my $const = {
 	},
 
 };
-my $count = 0;
-my $count_ex = 0;
-my $result = '(lambda (id) ';
-for my $i (0..$level) {
-	my $rand = int(rand(@mas_op));
-	if($mas_op[$#mas_op] eq 'tfold') {
-		if($level < 7) {
-			print "\n";
-			exit(0);
+LINE:
+for (1..$num_variants) {
+	my $count = 0;
+	my $count_ex = 0;
+	my $result = '(lambda (id) ';
+	for my $i (1..$level) {
+		my $rand = int(rand(@mas_op));
+		if($mas_op[$#mas_op] eq 'tfold') {
+			$rand = $#mas_op;
+			$mas_op[$#mas_op] = 'fold';
 		}
-		$rand = $#mas_op;
-		$mas_op[$#mas_op] = 'fold';
-	}
-	my $count_ex_pre = 0;
-	while($result =~ /Ex/g) {
-		$count_ex_pre++;
-	}
-	if($operators->{$mas_op[$rand]}->{'flag'} == 1) {
-		my $flag = 0;
-		for my $oper (@mas_op) {
-			if ($operators->{$oper}->{'flag'} == 0) {
-				$flag = 1;
-			}
+		my $count_ex_pre = 0;
+		while($result =~ /Ex/g) {
+			$count_ex_pre++;
 		}
-		redo if $flag;
-	}
-	my $exp;
-	if (($i == $level) and ($count + 2 + $count_ex_pre == $level)) {
-		if($operators->{$mas_op[$rand]}->{'w'} != 1) {
-			for (@mas_op) {
-				if (exists $unar_operators->{$_}) {
-					$exp = $unar_operators->{$_}->{'exp'};
+		if($operators->{$mas_op[$rand]}->{'flag'} == 1) {
+			my $flag = 0;
+			for my $oper (@mas_op) {
+				if ($operators->{$oper}->{'flag'} == 0) {
+					$flag = 1;
 				}
-			}	
+			}
+			redo if $flag;
 		}
-	}else {
-		$exp = $operators->{$mas_op[$rand]}->{'exp'};
-	}
-	if ($result =~ /Ex/) {
-		$result =~ s/Ex/$exp/;
-	} else {
-		
-		$result =~ s/(.*)$/$1 $exp/;
-	}
-	if($mas_op[$rand]  eq 'fold') {
-		pop(@mas_op);
+		my $exp;
+		if (($i == $level) and ($count + 2 + $count_ex_pre == $level)) {
+			if($operators->{$mas_op[$rand]}->{'w'} != 1) {
+				for (@mas_op) {
+					if (exists $unar_operators->{$_}) {
+						$exp = $unar_operators->{$_}->{'exp'};
+					}
+				}	
+			}
+		} else {
+			$exp = $operators->{$mas_op[$rand]}->{'exp'};
+		}
+		if ($result =~ /Ex/) {
+			$result =~ s/Ex/$exp/;
+		} else {
+			
+			$result =~ s/(.*)$/$1 $exp/;
+		}
+		if($mas_op[$rand]  eq 'fold') {
+			pop(@mas_op);
+			$count++;
+		} else {
+			$operators->{$mas_op[$rand]}->{'flag'} = 1;
+		}
 		$count++;
-	} else {
-		$operators->{$mas_op[$rand]}->{'flag'} = 1;
+		$count_ex = 0;
+		while($result =~ /Ex/g) {
+			$count_ex++;
+		}
+	#	if($level < $count + $count_ex) {
+	#		print "\n";
+	#		next LINE;
+	#	}
+		if (($level-1 <= $count + $count_ex) or (not @mas_op)) {
+			last;
+		}
 	}
-	$count++;
-	$count_ex = 0;
-	while($result =~ /Ex/g) {
-		$count_ex++;
-	}
-	if($level < $count + $count_ex) {
-		print "\n";
-		exit(0)
-	}
-	if (($level-1 <= $count + $count_ex) or (not @mas_op)) {
-		last;
-	}
-}
 
-for my $i (1..$count_ex) {
-	my $rand = int(rand(@mas_const));
-	my $exp = $const->{$mas_const[$rand]}->{'exp'};
-	if ($exp eq 'id' and $result =~ /[^(Ex)]\(fold [\S]* [\S]* \( lambda \( id1 id2 \) Ex \) \)/) {
-		$exp .= 1+int(rand(2));	 
+	for my $i (1..$count_ex) {
+		my $rand = int(rand(@mas_const));
+		my $exp = $const->{$mas_const[$rand]}->{'exp'};
+		if ($exp eq 'id' and $result =~ /[^(Ex)]\(fold [\S]* [\S]* \( lambda \( id1 id2 \) Ex \) \)/) {
+			$exp .= 1+int(rand(2));	 
+		}
+		if($result =~ /\(Ex\)/) {
+			$result =~ s/\(Ex\)/$exp/;
+		} elsif ($result =~ /Ex/) {
+			$result =~ s/Ex/$exp/;
+		}
 	}
-	if($result =~ /\(Ex\)/) {
-		$result =~ s/\(Ex\)/$exp/;
-	} elsif ($result =~ /Ex/) {
-		$result =~ s/Ex/$exp/;
-	}
-}
 
-print "$result)\n";
+	print "$result)\n";
+}
