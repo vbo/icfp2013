@@ -38,7 +38,7 @@ def call(path, request):
             raise RequestError(response.status_code)
         return response.json()
     except BaseException as e:
-        if isinstance(e, KeyboardInterrupt):
+        if isinstance(e, KeyboardInterrupt) or isinstance(e, AlreadySolvedException):
             raise
         if not auto_retry:
             raise

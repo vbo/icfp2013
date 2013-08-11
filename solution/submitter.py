@@ -72,6 +72,7 @@ def submit(problem):
     guesses_used = 0
     comforming_variants = []
     for variant in variants:
+        print variant
         comforming_variants.append(variant)
         if not is_program_conform_to_data(variant, new_inputs, new_outputs):
             print "skipping variant because it doesn't work on new data"

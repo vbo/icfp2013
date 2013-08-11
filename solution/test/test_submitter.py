@@ -28,6 +28,7 @@ class Mock(object):
             self.generated_variants += 1
             outputs = list(solver.solve_formula(formula, map(lambda x: Int64(int(x, base=16)), self.inputs)))
             if util.get_int64_array_hash(outputs) == outputs_hash:
+                print 'trying formula: ', formula['s']
                 yield formula['s']
 
 submitter.get_variants_count = lambda x: 0
@@ -37,10 +38,13 @@ class SubmitterTestCase(unittest.TestCase):
 
     @attr('ddos')
     def test_with_train(self):
+        #problem = {u'challenge': u'(lambda (x_3437) (fold x_3437 0 (lambda (x_3437 x_3438) (plus (not 0) x_3437))))', u'operators': [u'not', u'plus', u'tfold'], u'id': u'HiEjgHecmuh14zXl0JzaUkB3', u'size': 9}
         problem = None
         if not problem:
             for i in range(5):
+                print '------------', i
                 problem = api.train(9)
+                print 'We will solve this: ', problem['challenge']
                 self._try_solve(problem)
         else:
             self._try_solve(problem)

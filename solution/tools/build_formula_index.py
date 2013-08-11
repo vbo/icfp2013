@@ -1,7 +1,7 @@
 import itertools
 import os
 
-from ..operators import Operators, get_templated_operators
+from ..operators import Operators, get_templated_operators, get_formula_reducers
 
 
 class TreeVar(int):
@@ -66,6 +66,8 @@ class TemplatedProgramTreeNode(object):
 
         self.size = size
 
+        self.reducers = get_formula_reducers()
+
     def render(self, contain_fold_ids, allowed_ops=None):
         return self._render(TemplateRenderingState(contain_fold_ids, allowed_ops))
 
@@ -73,30 +75,46 @@ class TemplatedProgramTreeNode(object):
         if self.operator == Operators.TERMINAL:
 
             for terminal in Operators.TERMINALS:
-                yield {'operator': terminal, 'ops': []}
+                yield {'operator': terminal, 'ops': [], 'f': terminal }
 
             if state.contain_fold_ids:
-                yield {'operator': Operators.ID2, 'ops': []}
-                yield {'operator': Operators.ID3, 'ops': []}
+                yield {'operator': Operators.ID2, 'ops': [], 'f': Operators.ID2 }
+                yield {'operator': Operators.ID3, 'ops': [], 'f': Operators.ID3 }
 
         elif self.operator == Operators.OP1:
             for value in self.args[0]._render(state):
                 for op in state.allowed_unary:
-                    yield {
-                        'operator': op,
-                        'args': (value,),
-                        'ops': value['ops'] + [op],
-                    }
+                    f1 = (op, (value['f'], ))
+                    f2 = (op, (value['operator'], ))
+                    if f1 in self.reducers:
+                        yield self.reducers[f1]((value, ))
+                    elif f2 in self.reducers:
+                        yield self.reducers[f2]((value, ))
+                    else:
+                        yield {
+                            'operator': op,
+                            'args': (value,),
+                            'ops': value['ops'] + [op],
+                            'f': f1
+                        }
 
         elif self.operator == Operators.OP2:
             for value in self.args[0]._render(state):
                 for value2 in self.args[1]._render(state):
                     for op in state.allowed_binary:
-                        yield {
-                            'operator': op,
-                            'args': (value, value2),
-                            'ops': value['ops'] + value2['ops'] + [op]
-                        }
+                        f1 = (op, (value['f'], value2['f']))
+                        f2 = (op, (value['operator'], value2['operator']))
+                        if f1 in self.reducers:
+                            yield self.reducers[f1]((value, value2))
+                        elif f2 in self.reducers:
+                            yield self.reducers[f2]((value, value2))
+                        else:
+                            yield {
+                                'operator': op,
+                                'args': (value, value2),
+                                'ops': value['ops'] + value2['ops'] + [op],
+                                'f': f1
+                            }
 
         elif self.operator == Operators.IF0 and state.is_if0_allowed:
             op = Operators.IF0
@@ -104,11 +122,19 @@ class TemplatedProgramTreeNode(object):
             for value in self.args[0]._render(state):
                 for value2 in self.args[1]._render(state):
                     for value3 in self.args[2]._render(state):
-                        yield {
-                            'operator': op,
-                            'args': (value, value2, value3),
-                            'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
-                        }
+                        f1 = (op, (value['f'], value2['f'], value3['f']))
+                        f2 = (op, (value['operator'], value2['operator'], value3['operator']))
+                        if f1 in self.reducers:
+                            yield self.reducers[f1]((value, value2, value3))
+                        elif f2 in self.reducers:
+                            yield self.reducers[f2]((value, value2, value3))
+                        else:
+                            yield {
+                                'operator': op,
+                                'args': (value, value2, value3),
+                                'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
+                                'f': f1
+                            }
 
         elif self.operator == Operators.FOLD and state.is_fold_allowed:
             if state.contain_fold_ids:
@@ -121,11 +147,19 @@ class TemplatedProgramTreeNode(object):
 
                     state.contain_fold_ids = True
                     for value3 in self.args[2]._render(state):
-                        yield {
-                            'operator': op,
-                            'args': (value, value2, value3),
-                            'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
-                        }
+                        f1 = (op, (value['f'], value2['f'], value3['f']))
+                        f2 = (op, (value['operator'], value2['operator'], value3['operator']))
+                        if f1 in self.reducers:
+                            yield self.reducers[f1]((value, value2, value3))
+                        elif f2 in self.reducers:
+                            yield self.reducers[f2]((value, value2, value3))
+                        else:
+                            yield {
+                                'operator': op,
+                                'args': (value, value2, value3),
+                                'ops': [op] + value['ops'] + value2['ops'] + value3['ops'],
+                                'f': f1
+                            }
 
                     state.contain_fold_ids = False
 
@@ -349,20 +383,21 @@ class TreeTemplatesIndex(object):
         if templates is None:
             raise ValueError('Index for size %d was not built. You need to call index.generate_missing_templates(%d) first.' % (templates_level, templates_level))
 
+        formulas_set = set()
+
         for template in templates:
             for formula in template.render(contain_fold_ids=is_tfold, allowed_ops=allowed_ops):
                 ops = set(formula['ops'])
-
 
                 if allowed_ops is not None:
                     if is_tfold:
                         ops.add(Operators.TFOLD)
 
                     # Do not yeld formula if it doesn't have ALL required operators
-                    if ops.symmetric_difference(allowed_ops):
-                        continue
+                    #if ops.symmetric_difference(allowed_ops):
+                        #continue
 
-                formula['ops'] = ops
+                formula['ops'] = list(ops)
 
                 if is_tfold:
                     formula_str = '(lambda (%s) (fold %s 0 (lambda (%s %s) %s)))' % (
@@ -386,7 +421,9 @@ class TreeTemplatesIndex(object):
 
                 formula['s'] = formula_str
                 formula['size'] = size
-                yield formula
+                if formula_str not in formulas_set:
+                    formulas_set.add(formula_str)
+                    yield formula
 
 
 class TreeIndexDispatcher(object):
