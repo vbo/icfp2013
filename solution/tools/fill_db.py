@@ -1,4 +1,5 @@
 import argparse
+import itertools
 import os
 import tempfile
 import filecmp
@@ -17,12 +18,12 @@ home_directory = os.environ['HOME']
 dropbox_directory = os.path.join(home_directory, 'Dropbox', 'Icfp2013', 'problems_index')
 
 
-def generate_sql_for_problem(problem, index, inputs, inputs_hash, parallelize=False, use_parser=True):
+def generate_sql_for_problem(problem, index, inputs, inputs_hash, use_parser=True):
     for formula in index.generate_formulas(problem["size"], allowed_ops=problem["operators"]):
         if use_parser:
             outputs = fast_solver.solve(formula["s"], inputs)
         else:
-            outputs = solver.solve_formula(formula["formula"], inputs, parallelize=parallelize)
+            outputs = solver.solve_formula(formula["formula"], inputs)
 
 
         db_outputs = get_int64_array_hash(outputs)
@@ -53,8 +54,8 @@ if __name__ == '__main__':
     parser.add_argument("--ninputs", type=int, dest='ninputs', default=256)
     parser.add_argument("--offset", type=int, dest='offset', default=0)
     parser.add_argument("--limit", type=int, dest='limit', default=1)
-    parser.add_argument("--group_id", type=int, dest='group_id', default=None)
-    parser.add_argument("--parallel", action='store_true', dest='parallelize')
+    parser.add_argument("--size", type=int, dest='size', default=None,
+            help='If specified, all combinations of programs of specified size will be generated.')
     parser.add_argument("-f", "--force", action='store_true', dest='force',
             help='Do not skip problem if SQL file already exists')
     parser.add_argument("--fixture", action='store_true', dest='fixture', default=False)
@@ -91,22 +92,6 @@ if __name__ == '__main__':
     if args.assert_only:
         args.force = True
 
-    if args.fixture:
-        problems_getter = lambda: problems.fixture_problems
-
-    if ops_to_filter:
-        problems_filter = lambda problem: not (set(get_templated_operators(problem['operators'])) - ops_to_filter)
-    else:
-        problems_filter = lambda problem: True
-
-    if args.group_id:
-        original_problems_filter = problems_filter
-        problems_filter = lambda problem: original_problems_filter(problem) and problem.get('group_id', 0) >= args.group_id
-
-    problems_without_dupes = filter(problems_filter, problems.get_problems_without_dupes(problems_getter))
-
-    print 'Total number of problems after applying filter:', len(problems_without_dupes)
-
     # We use GLOBALLY equal inputs to get inputs->outputs mapping for all problems which we can query GLOBALLY. i.e. if we don't know SIZE and OPERATORS (for bonus problems) we could just use our existing database to query only by INPUTS and OUTPUTS.
     inputs = list(generate_inputs(args.ninputs, seed=42))
     inputs_hash = get_int64_array_hash(inputs)
@@ -119,8 +104,27 @@ if __name__ == '__main__':
         (inputs_hash, inputs_readable)
     )
 
-    for problem_conf in problems_without_dupes[offset:offset + limit]:
-        group_id = problem_conf['group_id']
+    if args.size is not None:
+        problems_to_solve = [{
+            'id': -args.size,
+            'operators': None,
+            'size': args.size,
+        }]
+    else:
+        if args.fixture:
+            problems_getter = lambda: problems.fixture_problems
+
+        if ops_to_filter:
+            problems_filter = lambda problem: not (set(get_templated_operators(problem['operators'])) - ops_to_filter)
+        else:
+            problems_filter = lambda problem: True
+
+        problems_to_solve = filter(problems_filter, problems.get_problems_without_dupes(problems_getter))[offset:offset + limit]
+
+    print 'Total number of problems after applying filter:', len(problems_to_solve)
+
+    for problem_conf in problems_to_solve:
+        group_id = problem_conf['id']
 
         final_problem_sql_path = os.path.join(args.outdir, 'problem.%s.sql' % group_id)
         problem_sql_path = os.path.join(args.assert_dir, 'problem.%s.sql' % group_id)
@@ -141,6 +145,7 @@ if __name__ == '__main__':
 
         # Pick specialized index to reduce space for problems without certain elements (like fold)
         index = index_dispatcher.get_index(problem_conf['operators'])
+        index.generate_missing_templates(problem_conf['size'])
 
         need_to_delete_sql = False
 
@@ -148,17 +153,15 @@ if __name__ == '__main__':
             with open(problem_sql_path, 'w') as fp:
                 fp.write(inputs_query)
                 start_time = time.time()
-                i = 0
-                for program_query in generate_sql_for_problem(problem_conf, index, inputs, inputs_hash, parallelize=args.parallelize, use_parser=not args.noparse):
-                    i = i + 1
-                    if i > 221632:
-						fp.write(program_query)
-						if args.timeout:
-							elapsed = time.time() - start_time
-							if elapsed > args.timeout:
-								print "Skipping problem because of timeout"
-								need_to_delete_sql = True
-								break
+                for program_query in generate_sql_for_problem(problem_conf, index, inputs, inputs_hash, use_parser=not args.noparse):
+                    fp.write(program_query)
+                    if args.timeout:
+                        elapsed = time.time() - start_time
+                        if elapsed > args.timeout:
+                            print "Skipping problem because of timeout"
+                            need_to_delete_sql = True
+                            break
+
         except BaseException as e:
             #if os.path.isfile(problem_sql_path):
                 #os.remove(problem_sql_path)
