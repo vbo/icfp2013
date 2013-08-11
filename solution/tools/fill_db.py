@@ -14,7 +14,7 @@ from .. import problems
 from ..util import get_int64_array_hash
 
 home_directory = os.environ['HOME']
-dropbox_directory = os.path.join(home_directory, 'Dropbox', 'icfp2013', 'problems_index')
+dropbox_directory = os.path.join(home_directory, 'Dropbox', 'Icfp2013', 'problems_index')
 
 
 def generate_sql_for_problem(problem, index, parallelize=False, use_parser=True):
