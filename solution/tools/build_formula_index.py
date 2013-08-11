@@ -193,6 +193,15 @@ class TemplatedProgramTreeNode(object):
         return simple_repr
 
     @staticmethod
+    def fromtuple(as_tuple):
+        if not isinstance(as_tuple, tuple):
+            return TemplatedProgramTreeNode(as_tuple)
+        else:
+            op = as_tuple[0]
+            args = as_tuple[1:]
+            return TemplatedProgramTreeNode(op, map(TemplatedProgramTreeNode.fromtuple, args))
+
+    @staticmethod
     def deserialize(data):
         return TemplatedProgramTreeNode.deserialize_from_simple_repr(eval(data))
 
@@ -426,6 +435,8 @@ class TreeTemplatesIndex(object):
 
                 formula['s'] = formula_str
                 formula['size'] = size
+                #formula['template'] = template
+
                 if formula_str not in formulas_set:
                     formulas_set.add(formula_str)
                     yield formula
