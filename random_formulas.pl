@@ -73,6 +73,10 @@ my $result = '(lambda (id) ';
 for my $i (0..$level) {
 	my $rand = int(rand(@mas_op));
 	if($mas_op[$#mas_op] eq 'tfold') {
+		if($level < 7) {
+			print "\n";
+			exit(0);
+		}
 		$rand = $#mas_op;
 		$mas_op[$#mas_op] = 'fold';
 	}
@@ -103,7 +107,13 @@ for my $i (0..$level) {
 	while($result =~ /Ex/g) {
 		$count_ex++;
 	}
-	last if ($level-1 == $count + $count_ex);
+	if($level < $count + $count_ex) {
+		print "\n";
+		exit(0)
+	}
+	if (($level-1 <= $count + $count_ex) or (not @mas_op)) {
+		last;
+	}
 }
 
 for my $i (0..$count_ex) {
@@ -118,4 +128,5 @@ for my $i (0..$count_ex) {
 		$result =~ s/Ex/$exp/;
 	}
 }
+
 print "$result)\n";
