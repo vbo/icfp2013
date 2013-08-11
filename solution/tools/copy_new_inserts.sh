@@ -5,11 +5,13 @@ TARGET_FILE=$FILE
 
 NUM=1
 
+TARGET_FILE="$FILE.part.$NUM"
+
 while : ; do
 
     while : ; do
         [[ ! -f $TARGET_FILE ]] && break
-        TARGET_FILE="$FILE.$NUM"
+        TARGET_FILE="$FILE.part.$NUM"
         ((NUM+=1))
     done
 
