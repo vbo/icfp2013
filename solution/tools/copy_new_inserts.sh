@@ -15,7 +15,9 @@ while : ; do
         ((NUM+=1))
     done
 
-    comm -23 $1 $2 2>/dev/null | head -n -1 | tee >> $2 $TARGET_FILE
+    comm -23 $1 $2 2>/dev/null | tee >> $2 $TARGET_FILE
+
+    head -n $(( `wc -l < $TARGET_FILE` - 1 )) $TARGET_FILE
 
     cp $TARGET_FILE ~/Dropbox/Icfp2013/problems_index/
 
