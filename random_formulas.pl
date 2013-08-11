@@ -65,6 +65,7 @@ my $operators = {
 		'w' => 2,
 	},
 };
+=qw
 my $unar_operators = {
 	'shr1' => { 
 		'exp' => '(shr1 Ex)',
@@ -93,6 +94,7 @@ my $unar_operators = {
 	},
 
 };
+=cut
 my $const = {
 	'1' => {
 		'exp' => '1',
@@ -113,59 +115,35 @@ for (1..$num_variants) {
 	my $count = 0;
 	my $count_ex = 0;
 	my $result = '(lambda (id) ';
+	my @parametrs = @mas_op;
 	for my $i (1..$level) {
-		my $rand = int(rand(@mas_op));
-		if($mas_op[$#mas_op] eq 'tfold') {
-			$rand = $#mas_op;
-			$mas_op[$#mas_op] = 'fold';
+		my $rand = int(rand(@parametrs));
+		if($parametrs[$#parametrs] eq 'tfold') {
+			$rand = $#parametrs;
+			$parametrs[$#parametrs] = 'fold';
 		}
 		my $count_ex_pre = 0;
 		while($result =~ /Ex/g) {
 			$count_ex_pre++;
 		}
-		if($operators->{$mas_op[$rand]}->{'flag'} == 1) {
-			my $flag = 0;
-			for my $oper (@mas_op) {
-				if ($operators->{$oper}->{'flag'} == 0) {
-					$flag = 1;
-				}
-			}
-			redo if $flag;
-		}
-		my $exp;
-		if (($i == $level) and ($count + 2 + $count_ex_pre == $level)) {
-			if($operators->{$mas_op[$rand]}->{'w'} != 1) {
-				for (@mas_op) {
-					if (exists $unar_operators->{$_}) {
-						$exp = $unar_operators->{$_}->{'exp'};
-					}
-				}	
-			}
-		} else {
-			$exp = $operators->{$mas_op[$rand]}->{'exp'};
-		}
+		my $exp = $operators->{$parametrs[$rand]}->{'exp'};
 		if ($result =~ /Ex/) {
 			$result =~ s/Ex/$exp/;
 		} else {
-			
 			$result =~ s/(.*)$/$1 $exp/;
 		}
-		if($mas_op[$rand]  eq 'fold') {
-			pop(@mas_op);
+		if($parametrs[$rand]  eq 'fold') {
+			pop(@parametrs);
 			$count++;
 		} else {
-			$operators->{$mas_op[$rand]}->{'flag'} = 1;
+			$operators->{$parametrs[$rand]}->{'flag'} = 1;
 		}
 		$count++;
 		$count_ex = 0;
 		while($result =~ /Ex/g) {
 			$count_ex++;
 		}
-	#	if($level < $count + $count_ex) {
-	#		print "\n";
-	#		next LINE;
-	#	}
-		if (($level-1 <= $count + $count_ex) or (not @mas_op)) {
+		if ($level-1 <= $count + $count_ex) {
 			last;
 		}
 	}
