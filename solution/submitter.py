@@ -25,6 +25,14 @@ class NotSolvedError(BaseException):
     def __str__(self):
         return self.message
 
+class WinError(BaseException):
+    def __init__(self, message):
+        super(BaseException, self).__init__()
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
 class IndexNotFoundError(Exception):
     pass
 
@@ -108,6 +116,7 @@ def submit(problem, poll_storage=True, cond=None):
             if res['status'] == 'win':
                 print "solved from (at least) %d variants. %d guesses used. " % (variants_tried, guesses_used)
                 print "answer is: ", variant
+                raise WinError("WIN")
             elif res['status'] == 'error':
                 print "error returned:", res.get('message')
             else:
@@ -178,6 +187,8 @@ def submit_in_sandbox(problem, poll_storage=True, cond=None):
             cond.acquire()
         print "Solving %s[size=%s]" % (problem['id'], problem['size'])
         submit(problem, poll_storage=poll_storage, cond=cond)
+    except WinError as e:
+        print e.message
     except NotSolvedError as e:
         print "not solved"
         print e.outputs
